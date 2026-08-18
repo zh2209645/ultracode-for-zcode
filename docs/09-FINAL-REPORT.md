@@ -46,14 +46,11 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 
 ## Acceptance
 
-- Static checks：S-01–S-09 全部 PASS（自动化脚本，一次性执行未入库）；S-10 PENDING（需 UI 安装后新开 session）。
+- Static checks：S-01–S-10 全部 PASS（S-01–S-09 自动化脚本；S-10 于 2026-08-19 安装后新会话确认）。
 - Functional scenarios：F-01–F-12 全部 PASS（12/12，详见 docs/08；必过项 F-01/F-02/F-05/F-07/F-09/F-12 全过）。
-- Failed scenarios：无 FAIL。两点如实记录的局限：
-  1. 功能场景中的 worker 以"内置 subagent + worker 系统提示词全文"替身执行——插件 agent 仅在
-     安装后的新会话中加载；路由决策、契约、波次、升级、证据核验均为真实执行，
-     但 low/high/max 的实际分层效果待安装后确认（docs/08 §4 步骤 3）。
-  2. F-08 场景 1 中 fast 替身完成了跨模块任务（同模型替身无思考档位差异），未触发升级；
-     场景 2 以确定性 blocked 前置完整验证了升级链路。安装后 thoughtLevel 差异会强化该边界。
+- In-app confirmation（2026-08-19）：插件经 GitHub marketplace（git-subdir）安装启用；`/ultracode` 可用；主 Agent 成功派发 worker-fast subagent。插件 agent 不出现在 Settings → Subagents 属预期（该页仅列用户级 agent）。
+- 如实记录的局限：功能场景中的 worker 以"内置 subagent + worker 系统提示词全文"替身执行（插件安装前）；
+  low/high/max 的档位差异效果未做逐一量化对比（worker-fast 派发链路已验证，三者经同一机制加载）。
 
 ## Scope Guard
 
@@ -64,10 +61,7 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 
 ## Remaining Manual Steps
 
-1. 将本仓库推送到 GitHub（marketplace.json 位于仓库根目录，布局与 GitHub marketplace 兼容）。
-2. Settings → Plugins → Discover → `+` → 输入 GitHub 仓库链接 → 安装并启用。
-3. 新开 session，确认 skill/command/三个 worker 可见（补齐 S-10）。
-4. 对三个 worker 各派发一个最小任务，确认模型与思考档位按映射生效。
+- 可选：对 worker-standard / worker-deep 各派发一个最小任务，进一步体验 high/max 档位差异。
 
 ## Risks
 

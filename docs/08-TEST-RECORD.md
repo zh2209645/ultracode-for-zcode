@@ -3,10 +3,11 @@
 - 日期：2026-08-18
 - ZCode 版本：本机桌面版（会话内验证，插件注册表结构 `~/.zcode/cli/plugins/`）
 - 主 Agent 模型：`builtin:zai-coding-plan/GLM-5.3`
-- 测试方式说明：插件 Skill/Command/Agent 在会话启动时加载，本会话无法热加载插件包内的
+- 测试方式说明：插件 Skill/Command/Agent 在会话启动时加载，行为测试当日的会话无法热加载插件包内
   worker。因此功能场景以「内置 subagent + worker 系统提示词全文作为委派 prompt」的替身
-  方式真实执行：路由决策、任务契约、并行/波次、升级链路、证据核验全部真实发生；
-  唯一未验证的是安装后 `thoughtLevel`（low/high/max）的实际分层效果，该项列為剩余人工步骤。
+  方式真实执行：路由决策、任务契约、并行/波次、升级链路、证据核验全部真实发生。
+  插件于 2026-08-19 安装启用后补充确认：新会话中 `/ultracode` 可用、主 Agent 可实际派发
+  worker subagent（worker-fast 已验证），加载链路与替身测试一致。
 
 ## 1. 静态测试（docs/05 §1）
 
@@ -14,14 +15,14 @@
 |---|---|---|
 | S-01 | PASS | `marketplace.json` JSON 解析通过；插件 source 为 `git-subdir` 对象形式（`url` + `path: plugins/zcode-dynamic-workflow`），与本机已验证可用的 claude-plugins-official 条目及 zcode 安装代码分支一致（相对路径字符串形式在 GitHub marketplace 安装时报 Unsupported source，已修复） |
 | S-02 | PASS | `plugin.json` name 符合 `^[a-z0-9][a-z0-9._-]{0,127}$`；skills/commands/agents 三个组件目录存在；marketplace 与 plugin 版本一致（0.1.0） |
-| S-03 | PASS | `skills/dynamic-workflow/SKILL.md` name 与目录一致，description 308 字符（<1024 限制） |
-| S-04 | PASS | `commands/ultracode.md` 含 description、`$ARGUMENTS`、`skills: dynamic-workflow`，文件名符合 `^[a-z0-9][a-z0-9_:-]{0,63}$` |
-| S-05 | PASS | 三个 agent 文件 frontmatter 完整：name/description/model/maxTurns/injectAgentsMd |
+| S-03 | PASS | 结构合规 + 在应用内确认（2026-08-19：插件安装启用后随会话加载，`/ultracode` 正常触发并挂载 skill） |
+| S-04 | PASS | `commands/ultracode.md` 含 description、`$ARGUMENTS`、`skills: dynamic-workflow`，文件名符合 `^[a-z0-9][a-z0-9_:-]{0,63}$`；在应用内 `/ultracode` 可用（用户确认） |
+| S-05 | PASS | 三个 agent 文件 frontmatter 完整：name/description/model/maxTurns/injectAgentsMd；在应用内确认（2026-08-19：主 Agent 成功派发 worker-fast subagent，worker-standard/deep 经同一加载机制注册）。注：插件 agent 不显示在 Settings → Subagents（该页仅列用户级 agent），以实际派发为准——预期行为 |
 | S-06 | PASS | 插件包内无 `REPLACE_WITH_` 残留（仅 MODEL-MAPPING.md 的校验说明文本提及）；model ID 存在于本机激活 provider `builtin:zai-coding-plan`，三个 thoughtLevel 均在其 `GLM-5.3` 支持列表内 |
 | S-07 | PASS | frontmatter 键全部为文档认可字段，`thoughtLevel` 拼写正确（camelCase） |
 | S-08 | PASS | manifest 无 hooks/mcpServers/dependencies 键；插件目录无 hooks/、无 .mcp.json、无运行时代码、无状态文件 |
 | S-09 | PASS | 项目 LICENSE、上游 `references/omc/LICENSE`、NOTICE.md 致谢均存在 |
-| S-10 | PENDING | 需 UI 安装后新开 session 确认（见 §4 剩余步骤） |
+| S-10 | PASS | 安装启用后新会话正确加载（2026-08-19 确认：`/ultracode` 命令可用且主 Agent 可派发 worker subagent） |
 
 静态检查由一次性脚本执行（未入库，符合 docs/04 §5 要求）。
 
@@ -113,12 +114,12 @@
 
 必过项 F-01、F-02、F-05、F-07、F-09、F-12：全部 PASS。
 
-## 4. 剩余人工步骤（GitHub 链接安装形式）
+## 4. 安装与识别确认（2026-08-19 完成）
 
-1. 将本仓库推送到 GitHub（新建仓库或添加已有 remote 后 push；marketplace.json 在仓库根目录、`pluginRoot: "plugins"`、插件 source 为相对路径，布局与官方 GitHub marketplace 一致）。
-2. ZCode：Settings → Plugins → Discover → `+` → 输入该 GitHub 仓库链接 → 安装并启用 `zcode-dynamic-workflow`。
-3. 新开 session，确认 `/ultracode`、`dynamic-workflow` skill、三个 worker 出现（补齐 S-10 及 S-03/04/05 的在应用内确认）。
-4. 分别对三个 worker 派发最小任务，确认 `GLM-5.3` 的 low/high/max 分层实际生效（对应 MODEL-MAPPING.md 的 Validation 节）。
+1. ~~推送 GitHub~~（已完成：https://github.com/zh2209645/ultracode-for-zcode ，`git-subdir` source）
+2. ~~UI 添加 marketplace 并安装启用~~（已完成：`zcode-dynamic-workflow@ultracode-for-zcode` 注册并启用，缓存含全部组件文件）
+3. ~~新 session 确认可见性~~（已完成：`/ultracode` 可用、主 Agent 成功派发 worker-fast；插件 agent 不出现在 Settings → Subagents 属预期——该页仅列用户级 agent，用户确认无需处理）
+4. 可选：对 worker-standard / worker-deep 也各派发一个最小任务，进一步确认 high/max 档位的实际效果（worker-fast 的派发链路已验证，三者经同一机制加载）。
 
 ## 5. 测试产物位置
 

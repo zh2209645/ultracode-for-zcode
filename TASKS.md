@@ -12,7 +12,7 @@
 
 ## B. 插件结构
 
-> 离线静态校验全部通过（docs/08 §1）；在应用内的最终确认合并为 docs/08 §4 的单一人工步骤（UI 安装 + 新开 session）。
+> 离线静态校验全部通过（docs/08 §1）；2026-08-19 已在应用内完成安装确认：GitHub marketplace 安装启用成功，`/ultracode` 可用，主 Agent 可派发 worker subagent（worker-fast 已验证）。插件 agent 不出现在 Settings → Subagents 属预期（该页仅列用户级 agent）。
 
 - [x] 验证 `.zcode-plugin/plugin.json` 可被加载（schema 校验 + 与已安装插件对照）
 - [x] 验证 `marketplace.json` 能作为本地 marketplace 添加（格式符合官方 marketplace schema，source 可解析）
