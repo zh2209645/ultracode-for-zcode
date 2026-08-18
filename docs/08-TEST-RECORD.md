@@ -119,8 +119,100 @@
 1. ~~推送 GitHub~~（已完成：https://github.com/zh2209645/ultracode-for-zcode ，`git-subdir` source）
 2. ~~UI 添加 marketplace 并安装启用~~（已完成：`zcode-dynamic-workflow@ultracode-for-zcode` 注册并启用，缓存含全部组件文件）
 3. ~~新 session 确认可见性~~（已完成：`/ultracode` 可用、主 Agent 成功派发 worker-fast；插件 agent 不出现在 Settings → Subagents 属预期——该页仅列用户级 agent，用户确认无需处理）
-4. 可选：对 worker-standard / worker-deep 也各派发一个最小任务，进一步确认 high/max 档位的实际效果（worker-fast 的派发链路已验证，三者经同一机制加载）。
+4. ~~可选：对 worker-standard / worker-deep 也各派发一个最小任务，进一步确认 high/max 档位的实际效果~~（已完成 2026-08-19：三层 worker 均经插件本体实际派发成功，见 §6；档位差异的量化效果仍未测——单次实跑仅证明派发链路与任务完成，见 §6 诚实性说明）。
 
 ## 5. 测试产物位置
 
 临时工作区：`%TEMP%\dwf-acceptance\`（t1–t5 各场景的真实文件与测试，可随时复查或删除）。
+
+## 6. 插件本体实跑确认（2026-08-19，/ultracode 模式测试）
+
+用户经 `/ultracode` 发起「ultracode模式测试」。主 Agent 按 dynamic-workflow skill 实跑一次完整
+动态工作流；此前仅 worker-fast 经插件本体派发过（见 §4 第 3 条），本次补齐 standard/deep 两层。
+主 Agent 模型 `builtin:zai-coding-plan/GLM-5.3`。
+
+### 派发记录（worker 均经已安装插件派发，缓存路径
+`C:\Users\qianp\.zcode\cli\plugins\cache\ultracode-for-zcode\zcode-dynamic-workflow\0.1.0`）
+
+| Wave | 任务 | 执行者（层级） | STATUS | 关键结果 |
+|---|---|---|---|---|
+| 0 | 读验收文档/测试记录/模型映射，定位遗留项 | 主 Agent 直接 | — | 遗留项 = §4 第 4 条 |
+| 1 | T1 安装缓存 vs 仓库 9 文件漂移审计 | 内置 Explore（只读） | 完成 | 9/9 SHA-256 一致；无占位符；plugin.json 无 hooks/mcpServers/dependencies；三个 worker frontmatter 均为具体 model + camelCase thoughtLevel |
+| 1 | T2 SHA256SUMS.txt 逐项校验 | 插件 worker-fast（low） | done | 30/31 MATCH；发现自条目 = 空文件哈希（生成器缺陷，见下）；树干净、无清单外文件 |
+| 1 | T3 两份 README 事实性声明审计 | 插件 worker-standard（high） | done | 唯一 STALE：根 README §3 包结构树漏列 5 个已跟踪文件；1 项 UNVERIFIABLE（provider 排他性属环境声明）；其余 SUPPORTED 带 file:line |
+| 2 | T4 本实跑的路由合规独立复核 | 插件 worker-deep（max） | done | SKILL.md 各节合规 PASS；5 条发现（2 Medium / 3 Low）；判定 §4 第 4 条可关闭 |
+| 3 | 本节记录写入 | 主 Agent 直接（按 T4 Finding D 由 standard 降级） | — | 单文件机械写入评分 0–2 → 直接完成，符合 SKILL.md §3 |
+| 4 | git diff 复核 + 最终报告 | 主 Agent 直接 | — | 仅 docs/08 变更 |
+
+- 波次与并发：Wave 1 三个独立任务前台并行（并发 3 = 上限）；Wave 2/3/4 因依赖前波结果串行。
+- 升级 0 次；嵌套派生 0 次；无同文件并行写；worker 均返回五段契约（STATUS/SUMMARY/EVIDENCE/VERIFICATION/RISKS）。
+- 派发链路证据（三重）：T1 全量 9 文件哈希比对一致；T4 独立复核 4 个政策文件（SKILL + 三 worker）哈希一致；worker-deep 自述其系统指令与 worker-deep.md 正文逐字一致。
+- 场景对应：F-01（Wave 0 直接）、F-02（T1 Explore）、F-03（T2 fast）、F-05（T4 deep）、F-06（Wave 1 并行）、F-07（依赖波次）、F-12（主 Agent 保留拆解/评分/整合/最终答复）；F-04 仅覆盖路由层（standard 实际使用），实现+测试类任务与 F-08/F-10/F-11 未在本轮复现（已由 §2 替身测试覆盖）。
+
+### 诚实性说明
+
+本次实跑证明 fast/standard/deep 三层均可经插件本体派发并返回带证据结果。因三层共用同一模型 ID
+（仅 thoughtLevel 不同），单次运行**不能**量化 low/high/max 的档位效果差异——本节仅主张派发链路
+确认，不主张档位性能结论（AGENTS.md：没有证据时不声称验证通过）。
+
+### 实跑发现（已于 §7 轮全部修复）
+
+1. `SHA256SUMS.txt` 对自身的条目为空文件哈希 `e3b0c442…`（生成器在写入前计算）；30 个内容文件
+   哈希全部正确。修复方式：重新生成清单时排除自条目或写入后回填（T2）。
+2. 根 README §3 包结构树漏列 `NOTICE.md`、`SHA256SUMS.txt`、`plugins/zcode-dynamic-workflow/README.md`、
+   `references/omc/README.md`、`references/omc/executor-notes.md`（T3）。
+3. SKILL.md 文案歧义（T4，仅建议调文案、不加 runtime）：Medium-A 批量机械校验的 fast 评分带不清；
+   Medium-B 需执行命令的只读任务（如哈希校验）的 Explore/worker 边界未定义；Low-C deep 触发词缺
+   「对决策/测试结果的独立复核」；Low-E Explore 返回契约未在 §8 约定。（Low-D 即本节 Wave 3 降级，
+   已当场采纳。）
+
+## 7. 修复轮与并发调整（2026-08-19，第二轮 /ultracode 会话）
+
+用户指令：修复 §6 发现的 3 类问题，并将 subagent 并发上限 3 → 10。
+
+### 波次与路由
+
+| Wave | 任务 | 执行者 | 结果 |
+|---|---|---|---|
+| 0 | 补读 AGENTS 必读文档 + 全库定位并发引用（含不含"并发"关键字的 §4.3"最多同时派发 3 个"） | 主 Agent 直接 | 6 个政策文件的 8 处数字定位完成 |
+| 1 | 13 处编辑：SKILL.md ×5（并发 10 + A/B/C/E）、README §3 树、MVP 主文档、docs/02/03×2/05/06 | 主 Agent 直接（小而精确的文本修改，F-01 行为） | 全部落盘 |
+| 2 | R1 一致性清查 + R2 政策复核 | 内置 Explore + 插件 worker-deep（并行，F-02/F-05 回归） | R1 5/5 PASS；R2 判 A/B/C/E 关闭、release-ready |
+| 2.5 | 按 R2 建议两处打磨（评分刻度三描述符对齐 0–2；§2.6 护栏句"上限是天花板不是目标"） | 主 Agent 直接 | 完成 |
+| 3 | 本节记录 + 插件缓存同步 + SHA256SUMS 重新生成 | 主 Agent 直接（依赖前序波次定稿，F-07 依赖链） | 完成 |
+| 4 | sha256sum -c 终验 + git status 复核 | 主 Agent 直接 | 31/31 OK（证据见会话最终报告） |
+
+### 变更清单
+
+1. 并发上限 3→10（用户指令）：`SKILL.md` §2.6、`ZCODE_DYNAMIC_WORKFLOW_MVP.md` §4.3、
+   `docs/02` §5、`docs/03` §8 + §13 伪代码、`docs/05` F-06 预期、`docs/06` 设计要求 7。
+   历史记录（`TASKS.md` 勾选项、本文档 §2/§6）保留"3"为史实，不改写历史。
+   ZCode 能力 notes 未记载宿主强制并发上限（references/zcode §Subagent："多个前台 Subagent 可并行"），
+   10 为政策默认值，无事实冲突；R2 风险表评估各风险均被现有文本缓解。
+2. SKILL.md 歧义修复（§6 发现 3，全为文案）：A = fast 覆盖规则补"批量机械校验"（如逐条清单/哈希
+   校验）且验证成本刻度补"一批机械逐项检查"；B = 只读覆盖行拆分：探索/映射/取证 → Explore，
+   需执行命令的规则性校验（逐条检查、测试、构建）→ worker（即使零写入）；C = 新增 deep 触发
+   "对主 Agent 重大决策/重要变更/验收结果的独立复核"；E = §8 补 Explore 结论也须带 file:line
+   或命令证据。
+3. README §3 包结构树补齐 5 个漏列文件；R1 逐叶比对确认树与 `git ls-files` 32 个跟踪文件完全一致
+   （修复 §6 发现 2）。
+4. `SHA256SUMS.txt` 重新生成并排除自条目，消除"自条目 = 空文件哈希"缺陷（修复 §6 发现 1）；
+   本清单在全部内容修改定稿后生成。
+5. 插件缓存 `…\cache\ultracode-for-zcode\zcode-dynamic-workflow\0.1.0\skills\dynamic-workflow\SKILL.md`
+   同步为仓库版本，新会话即生效；已运行会话需新开 session（ZCode 能力 notes：配置改变后应新开
+   session）。
+
+### 回归（docs/05 §5：并发上限变更后至少重跑 F-01/02/05/07/09）
+
+- F-01 PASS（实跑）：本轮 15 处小编辑全部主 Agent 直接完成，零委派。
+- F-02 PASS（实跑）：R1 只读清查，全部结论带命令与 file:line 证据。
+- F-05 PASS（实跑）：R2 deep 独立复核逐条裁决 + 全文件一致性 + 跨文档一致性 + 风险表。
+- F-07 PASS（实跑）：编辑 → 复核 → 打磨 → 记录 → 清单生成严格按依赖波次串行，清单生成置于终位。
+- F-09 未复现（无适用对象）：本仓库无认证/授权代码，安全覆盖行（SKILL.md §3）未改动，R2 复核
+  确认其原文完好且与新增行无冲突；§2 F-09 历史 PASS 仍立。
+
+### 遗留与建议
+
+- R2 非阻断分歧 1 处：SKILL 将 Explore 计入 10 上限（更严），docs/03 §8 给 Explore 独立
+  "合理规模" fan-out 预算——方向安全，后续修订 docs 时对齐即可。
+- 远端发布（push GitHub）前建议将 plugin.json / marketplace.json / SKILL.md metadata 版本升至
+  0.1.1，便于已安装用户收到更新提示（本轮未动版本号，保持本地缓存目录 0.1.0 一致性）。

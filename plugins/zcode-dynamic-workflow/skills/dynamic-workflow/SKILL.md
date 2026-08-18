@@ -28,7 +28,7 @@ For non-trivial work:
 3. Mark dependencies and possible write conflicts.
 4. Group independent tasks into execution waves.
 5. Keep tasks that write the same file or depend on another result in separate waves.
-6. Default to at most 3 concurrent subagents.
+6. Default to at most 10 concurrent subagents — launch only as many as genuine independence and value justify; the limit is a ceiling, not a target.
 
 Dynamic planning belongs to the primary Agent. Do not use a fixed pipeline when the task does not need one.
 
@@ -40,7 +40,7 @@ Score each dimension from 0 to 2:
 - Ambiguity: clear, some unknowns, unclear requirements or root cause.
 - Reasoning/coupling: mechanical, normal reasoning, architectural or long-chain reasoning.
 - Risk: non-behavioral, normal behavior, security/data/auth/API/production.
-- Verification cost: one local check, several tests, broad regression or manual QA.
+- Verification cost: one local check or a batch of mechanical per-item checks, several tests, broad regression or manual QA.
 
 Default route:
 
@@ -51,9 +51,10 @@ Default route:
 
 Overrides:
 
-- Read-only codebase research -> built-in `Explore`.
+- Read-only codebase research (search, call-chain mapping, discovery, evidence gathering) -> built-in `Explore`. Rule-based verification that must run commands (per-entry checks, tests, builds) -> a worker tier, even when it writes nothing.
 - Security, authentication, authorization, data migration, public API compatibility, architecture, or cross-module refactoring -> at least `worker-deep` analysis or independent deep review.
-- Mechanical edits, small documentation changes, and precisely scoped low-risk work -> prefer `worker-fast`, but only when delegation is still justified under section 1 (never delegate a trivial task just to use this rule).
+- Independent review of significant primary-Agent decisions, important changes, or acceptance results -> `worker-deep`.
+- Mechanical edits, batch mechanical verification across several files or entries (for example per-entry manifest or checksum checks), small documentation changes, and precisely scoped low-risk work -> prefer `worker-fast`, but only when delegation is still justified under section 1 (never delegate a trivial task just to use this rule).
 - Normal implementation, debugging, tests, and pattern-following multi-file changes -> prefer `worker-standard`.
 
 Choose the lightest tier that can reliably satisfy the acceptance criteria.
@@ -125,6 +126,8 @@ VERIFICATION
 RISKS / BLOCKERS
 - Assumptions, residual risks, or missing prerequisites
 ```
+
+Built-in `Explore` may return prose instead of this exact format, but its conclusions must still carry file, line, or command evidence.
 
 ## 9. Final response
 

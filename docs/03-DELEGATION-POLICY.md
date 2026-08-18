@@ -158,11 +158,11 @@ Wave 3: verification
 
 ## 8. 并发上限
 
-首版默认：
+默认：
 
-- 同时运行最多 3 个 worker；
+- 同时运行最多 10 个 worker；
 - Explore 可参与并行搜索，但总 fan-out 仍控制在合理规模；
-- 超过 3 个独立任务时，按收益、风险和依赖分批；
+- 超过 10 个独立任务时，按收益、风险和依赖分批；
 - 不为了展示并行而拆出过小任务。
 
 ## 9. 委派 Prompt 契约
@@ -267,7 +267,7 @@ else:
                 score = difficulty_score(task)
                 route = choose_tier(score, override_rules)
 
-        launch_independent_tasks_up_to_limit(3)
+        launch_independent_tasks_up_to_limit(10)
         collect_results()
 
         for failed_or_changed_task:

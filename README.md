@@ -31,8 +31,10 @@
 zcode-dynamic-workflow-mvp-kit/
 ├── README.md
 ├── AGENTS.md
+├── NOTICE.md
 ├── TASKS.md
 ├── ZCODE_DYNAMIC_WORKFLOW_MVP.md
+├── SHA256SUMS.txt
 ├── marketplace.json
 ├── docs/
 │   ├── 01-PROJECT-BRIEF.md
@@ -53,12 +55,15 @@ zcode-dynamic-workflow-mvp-kit/
 │       │   ├── worker-fast.md
 │       │   ├── worker-standard.md
 │       │   └── worker-deep.md
+│       ├── README.md
 │       ├── MODEL-MAPPING.md
 │       └── LICENSE
 └── references/
     ├── omc/
+    │   ├── README.md
     │   ├── ultrawork.SKILL.md
     │   ├── agent-tiers.md
+    │   ├── executor-notes.md
     │   ├── OMC_PLUGIN_MANIFEST_SNAPSHOT.json
     │   └── LICENSE
     └── zcode/

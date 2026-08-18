@@ -85,7 +85,7 @@ plugins/zcode-dynamic-workflow/agents/worker-deep.md
    - 8–10：deep。
 5. 只读搜索使用内置 Explore。
 6. 安全、认证、授权、数据、公开 API、架构和复杂重构至少使用 deep 分析或 deep 复核。
-7. 默认最大并发 3。
+7. 默认最大并发 10。
 8. 同文件写任务和有依赖任务不得错误并行。
 9. fast 失败升级 standard；standard 失败或风险扩大升级 deep；deep 失败交回主 Agent重规划。
 10. 同一任务最多自动升级一次。
