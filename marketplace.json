@@ -11,7 +11,7 @@
         "ref": "main"
       },
       "description": "Main-agent-planned dynamic delegation to fast, standard, and deep ZCode subagents",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "category": "developer-tools",
       "tags": [
         "workflow",
