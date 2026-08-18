@@ -1,8 +1,8 @@
 # Model Mapping
 
 Status: **configured and verified** (2026-08-19). The four Agent files use real model IDs
-and were all exercised in the v0.1.3 regression session (docs/08 §11). Release `v0.1.4` is
-published as a GPG-signed tag with the marketplace ref pinned to it (S-12 closed); the
+and were all exercised in the v0.1.3 regression session (docs/08 §11). Release `v0.1.5` is
+published as a GPG-signed tag with the marketplace ref pinned to it; the
 in-app GitHub update path was proven at v0.1.3.
 
 ## Active mapping (Option B — one model, three effort levels)

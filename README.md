@@ -2,12 +2,14 @@
 
 `zcode-dynamic-workflow` is a lightweight, native ZCode plugin for dependency-aware task delegation. It lets the primary Agent keep control of the overall goal while routing each atomic subtask to the lightest capable execution path.
 
-Current release: **v0.1.4** (formally published from the signed `v0.1.4` tag on 2026-08-19).
+Current release: **v0.1.5** (published from the signed `v0.1.5` tag on 2026-08-19).
 
 ## What it does
 
 The plugin adds a dynamic workflow policy that helps the primary Agent:
 
+- size the whole request first and, once it exceeds reading or modifying a few files, plan a dynamic workflow before touching any file;
+- keep its own context clean — goals, task graph, decisions, and verified conclusions instead of raw file bodies and exploration noise;
 - complete trivial work directly instead of delegating it;
 - use ZCode's built-in `Explore` agent for read-only discovery and evidence gathering;
 - use `worker-fast` for simple, mechanical, low-risk changes;
@@ -18,7 +20,7 @@ The plugin adds a dynamic workflow policy that helps the primary Agent:
 - escalate a failed write task at most once, then replan or report the blocker;
 - verify evidence and produce the final response itself.
 
-The primary Agent is always the sole orchestrator. Workers receive atomic task contracts and never take over the user's overall objective or create subagents of their own.
+The primary Agent is always the sole orchestrator. Workers receive atomic task contracts and never take over the user's overall objective or create subagents of their own. Under `/ultracode` the primary Agent runs in orchestrator mode: execution is delegated by default, and it steps in itself only for trivial work, after a subagent explicitly fails or returns incomplete work that re-dispatch cannot recover, or when the work cannot be decomposed and couples several interrelated file changes.
 
 ## Routing model
 
@@ -74,7 +76,7 @@ It does **not** add hooks, MCP servers, a Node/Python/TypeScript runtime, persis
 3. Install and enable `zcode-dynamic-workflow`.
 4. Start a new ZCode session so the command, skill, and agents are loaded.
 
-The marketplace source is pinned to the signed `v0.1.4` release tag.
+The marketplace source is pinned to the signed `v0.1.5` release tag.
 
 ## Usage
 
@@ -84,7 +86,7 @@ Describe a multi-step task normally and allow the skill to trigger, or invoke it
 /ultracode Refactor the authentication module, preserve API compatibility, and update the tests.
 ```
 
-For small tasks, no special command is needed—the policy intentionally avoids unnecessary delegation.
+For small tasks, no special command is needed—the policy intentionally avoids unnecessary delegation. `/ultracode` activates orchestrator mode, where the primary Agent delegates execution by default, keeps its context to plans, decisions, and verified results, and completes work itself only when it is trivial, a subagent has explicitly failed or returned incomplete work that re-dispatch cannot recover, or the work is an unsplittable set of interrelated file changes.
 
 ## Model mapping
 
@@ -115,7 +117,7 @@ See [the delegation policy](docs/03-DELEGATION-POLICY.md) for the full task-cont
 
 The plugin passed all eight mandatory behavioral scenarios on ZCode 3.7.7 using real plugin subagents: F-01, F-02, F-05, F-07, F-09, F-12, F-13, and F-14. Routing accuracy was 8/8, deep-worker misuse was 0%, and no nested delegation or infinite retry occurred.
 
-The behavioral regression was executed on v0.1.3. Release v0.1.4 is a declarative documentation and release-integrity update with unchanged Skill, Command, and Agent behavior. It closed the final S-12 gate by synchronizing all version fields, pinning the marketplace to `v0.1.4`, and publishing a valid GPG-signed tag. There are no remaining mandatory acceptance failures.
+The behavioral regression was executed on v0.1.3. Release v0.1.4 is a declarative documentation and release-integrity update with unchanged Skill, Command, and Agent behavior. It closed the final S-12 gate by synchronizing all version fields, pinning the marketplace to `v0.1.4`, and publishing a valid GPG-signed tag. Release v0.1.5 ships the request-sizing, context-hygiene, and orchestrator-mode prompt changes plus the English policy documents; it was validated by three rounds of independent adversarial review (the final round a blind full-changeset pass), but its behavior is not yet covered by a live regression — the mandatory set including the new F-15 scenario must be re-run on v0.1.5 before the next release.
 
 Evidence:
 

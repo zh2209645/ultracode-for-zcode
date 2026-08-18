@@ -425,3 +425,21 @@ docs-only 版本收口：本版本不改变任何 Skill/Command/Agent 行为，�
 > in-app at v0.1.3. Recommended follow-ups (non-blocking): publish the GPG public key on
 > GitHub for the Verified badge, refresh the marketplace to 0.1.4, and re-verify loading
 > in a new session.
+
+## 13. 0.1.5 发布（2026-08-19）
+
+行为更新版本：Skill 与 `/ultracode` prompt 变更（请求级规模判断、主上下文卫生、编排者模式及三条例外直接执行），docs/03 与 docs/06 全文英文化，docs/05 新增 F-15 场景并纳入强制门槛。
+
+- 验证方式：三轮独立对抗性复核（第 3 轮含一次无先验上下文的全量盲审），三个 worker-review 判定全部 pass；机械检查（frontmatter、代码围栏、内部交叉引用、CJK 语言边界、SHA256SUMS 过期范围）全部通过。发现并修复缺陷：第 1 轮 5 项、第 2 轮 3 项（另裁决 1 项误报：docs/06 禁止清单原文即 12 项）；第 3 轮零新增，判定收敛。
+- 如实记录：含 F-15 的强制行为回归未在 0.1.5 实跑，须在下一次发布前完成。回归时应包含三个修复接缝探针：(i) /ultracode 下严格串行流水线必须委派；(ii) 同一问题两败须先经 worker-review 裁决再允许接手写入；(iii) 少数文件但非琐碎的任务在编排者模式下必须委派。
+- 版本三处同步 0.1.5（marketplace.json version+ref、plugin.json、SKILL.md metadata）；`SHA256SUMS.txt` 按最终文件重新生成并全量校验；`git tag -s v0.1.5` 以密钥 `6B699BE4A10CE49F` 签名发布，marketplace ref 固定 `v0.1.5`。
+
+> EN: v0.1.5 is a prompt-behavior update (request sizing, primary-context hygiene, orchestrator
+> mode with three bounded direct-execution exceptions), an English rewrite of docs/03 and
+> docs/06, and the new mandatory F-15 gate in docs/05. Validation was three independent
+> adversarial review rounds (round 3 included a blind full-changeset pass), all verdicts pass;
+> 5 defects fixed in round 1, 3 in round 2 (plus 1 adjudicated false alarm: the docs/06
+> forbidden list was 12 items in the original Chinese too), zero new findings in round 3.
+> The F-15-inclusive live regression was NOT run on v0.1.5 and must pass before the next
+> release. Versions synchronized to 0.1.5, checksums regenerated, release published as
+> GPG-signed tag `v0.1.5` (key 6B699BE4A10CE49F).

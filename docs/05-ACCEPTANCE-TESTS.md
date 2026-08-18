@@ -1,10 +1,13 @@
 # 05 — 验收测试
 
-> EN: Acceptance tests — static checks S-01..S-12 and functional scenarios F-01..F-14.
-> Mandatory gates: F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14, routing accuracy ≥ 80%,
+> EN: Acceptance tests — static checks S-01..S-12 and functional scenarios F-01..F-15.
+> Mandatory gates: F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14/F-15, routing accuracy ≥ 80%,
 > deep misuse ≤ 20%, no nested delegation, no infinite retries. Current results (2026-08-19):
-> v0.1.4 formally released with all gates closed; unchanged plugin behavior is covered by
-> the v0.1.3 mandatory regression (8/8 PASS) — see docs/08 §11–§12.
+> v0.1.5 released with the request-sizing/context-hygiene/orchestrator-mode prompt updates
+> and the widened F-15 gate, after three independent adversarial review rounds. The live
+> mandatory regression has NOT been re-run on v0.1.5 and must pass before the next release;
+> the last executed regression (8/8 PASS, on unchanged v0.1.4 behavior via v0.1.3) is in
+> docs/08 §11–§12; the v0.1.5 release record is docs/08 §13.
 
 ## 1. 静态加载测试
 
@@ -215,11 +218,24 @@
 - 在检查后并发替换 reviewer 目标路径时，主 Agent重新解析并阻止读取；宿主不能原子绑定真实目标时任务 blocked；
 - 只通过 ZCode subagent result 返回 verdict 与证据。
 
+### F-15：编排者模式（/ultracode）
+
+通过 `/ultracode` 请求一个超出“阅读或修改少数文件”范围的多文件任务。
+
+预期：
+
+- 主 Agent先对整个请求做规模判断，再规划动态 workflow；
+- 执行类任务默认委派：只读发现 → Explore，写入 → fast/standard/deep，独立复核 → worker-review；主 Agent不亲自执行编排职责之外的任务；
+- 主上下文保留目标、任务图、决策、结果与已验证结论，不整体读取文件内容，汇总基于 worker 的 RETURN 块；
+- 仅当任务琐碎（直接做确实更省且同等可靠）、subagent 明确失败/未完成（`blocked`、`partial` 或无可用证据的 `done`）且重派或升级无法满足验收条件，或重规划后仍无法拆分且涉及多个相互关联的文件修改时，主 Agent才直接执行；不可拆分的耦合修改由主 Agent完成后，重大或高风险结果仍交 worker-review 复核；
+- 琐碎请求（如单处 typo 修复）即使在编排者模式下也直接完成，不启动 worker；
+- 最终验证与用户答复仍由主 Agent完成。
+
 ## 3. 质量指标
 
 首版建议记录：
 
-- 路由正确率：14 个场景中正确选择路径的比例；
+- 路由正确率：15 个场景中正确选择路径的比例；
 - 过度委派率：简单任务不必要启动 worker 的比例；
 - 低配失败率：fast/standard 因性能不足而升级的比例；
 - deep 滥用率：明显简单任务使用 deep 的比例；
@@ -229,7 +245,7 @@
 首版建议门槛：
 
 - 路由正确率 ≥ 80%；
-- F-01、F-02、F-05、F-07、F-09、F-12、F-13、F-14 必须通过；
+- F-01、F-02、F-05、F-07、F-09、F-12、F-13、F-14、F-15 必须通过；
 - deep 滥用率 ≤ 20%；
 - 不出现 nested delegation；
 - 不出现无限重试。
@@ -265,11 +281,12 @@
 
 ## 5. 回归测试
 
-每次修改以下内容后，至少重跑 F-01、F-02、F-05、F-07、F-09、F-13、F-14：
+每次修改以下内容后，至少重跑 F-01、F-02、F-05、F-07、F-09、F-12、F-13、F-14、F-15：
 
 - Skill description；
-- 难度阈值；
+- 难度阈值或请求级规模判断规则；
 - Agent description；
 - 模型映射；
 - 并发上限；
-- 升级规则。
+- 升级规则；
+- 编排者模式直接执行例外规则。

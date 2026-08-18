@@ -8,14 +8,15 @@ A lightweight ZCode plugin that teaches the primary Agent to plan a task dynamic
 - worker-standard;
 - worker-deep.
 
-The primary Agent retains planning, dependency management, aggregation, escalation, verification, and the final response.
+The primary Agent retains planning, dependency management, aggregation, escalation, verification, and the final response. It sizes the whole request before acting, keeps its own context to goals, decisions, and verified results, and — under `/ultracode` orchestrator mode — delegates execution by default, stepping in itself only for trivial work, after an explicit subagent failure or incomplete result that re-dispatch cannot recover, or for work that cannot be decomposed and couples several interrelated files. Release v0.1.5 ships these prompt updates; the F-15 behavioral regression re-run remains open and must pass before the next release.
 
 ## Installation
 
 Model IDs are pre-configured for the local machine (`builtin:zai-coding-plan/GLM-5.3`
-at `low`/`high`/`max` effort — see `MODEL-MAPPING.md`). Release `v0.1.4` is published as
+at `low`/`high`/`max` effort — see `MODEL-MAPPING.md`). Release `v0.1.5` is published as
 a GPG-signed tag and the marketplace source is pinned to it; v0.1.3 was verified in-app
-from GitHub on ZCode 3.7.7 (mandatory regression 8/8 PASS, 2026-08-19). Protect release
+from GitHub on ZCode 3.7.7 (mandatory regression 8/8 PASS, 2026-08-19), and the v0.1.5
+prompt changes still require that regression to be re-run including F-15. Protect release
 tags from force-updates. To install:
 
 1. In ZCode, open Settings → Plugins → Discover → `+`.
@@ -46,4 +47,4 @@ No hooks, MCP, runtime process, persistent state, Team server, Ralph loop, HUD, 
 - At most 3 write-capable workers run concurrently. Genuinely independent read-only Explore or `worker-review` tasks may raise total concurrency to 10.
 - Workspace `.zcode/**` is available only to the three write workers when the delegated task explicitly writes files, and only for task-owned todo/log records. Explore and `worker-review` report through the ZCode subagent result; `worker-review` cannot write files and must not read `.zcode`. User-level `~/.zcode`, plugin caches, credentials, unrelated session logs, and plugin-owned recovery databases remain out of scope. Shared `.zcode` files are updated serially; parallel write workers use distinct log files.
 - Residual risk: allowlists constrain tools, not file paths. Use ZCode `Confirm Before Changes` (the documented default) or an equivalently restrictive workspace sandbox for worker writes; do not use write-capable workers in `Full Access` for untrusted repositories. Review the requested path before approving it.
-- `marketplace.json` is pinned to the signed `v0.1.4` release tag. Protect or sign release tags, and bump the marketplace, plugin manifest, Skill metadata, and tag together for every release.
+- `marketplace.json` is pinned to the signed `v0.1.5` release tag. Protect or sign release tags, and bump the marketplace, plugin manifest, Skill metadata, and tag together for every release.

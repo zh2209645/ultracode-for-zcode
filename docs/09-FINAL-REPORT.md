@@ -1,7 +1,7 @@
 # 09 — 最终实施报告
 
 - 日期：2026-08-19
-- Plugin version：0.1.4（签名 tag `v0.1.4` 发布，S-12 收口；回归实测基于 0.1.3，0.1.4 为 docs-only 升级）
+- Plugin version：0.1.5（签名 tag `v0.1.5` 发布；0.1.5 为 prompt 行为更新，含 F-15 的强制回归待补测；回归实测基于 0.1.3，0.1.4 为 docs-only 升级）
 - ZCode 环境：Windows 桌面版 3.7.7，激活 provider `builtin:zai-coding-plan`（Z.ai Coding Plan）
 
 ## Executive Summary (EN)
@@ -92,6 +92,14 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 - Acceptance impact：S-12 moved from PARTIAL at the 0.1.3 checkpoint to PASS. Combined with the unchanged-runtime 0.1.3 regression, v0.1.4 has no remaining mandatory acceptance failures.
 - Scope guard：no Hook, MCP server, executable runtime, or persistent workflow state was introduced.
 
+## 0.1.5 Orchestrator Mode
+
+- Release type: prompt behavior update. Skill and `/ultracode` now (1) size the whole request before acting — direct work only within a "reading or modifying a few files" scope, dynamic workflow planning beyond it; (2) keep the primary context to plans, decisions, and verified conclusions, with targeted path/line evidence instead of bulk file reads; (3) run `/ultracode` in orchestrator mode — execution delegated by default, with three bounded direct-execution exceptions: trivial work (typically a single localized edit), subagent explicit failure/incompleteness once re-dispatch or escalation is exhausted (worker-review adjudication first after two failures), and genuinely unsplittable interrelated multi-file work (sequential pipelines of self-contained steps explicitly excluded).
+- docs/03 and docs/06 were rewritten in English; docs/05 gained the F-15 orchestrator-mode scenario, now a mandatory gate.
+- Validation: three independent adversarial review rounds (round 3 included a blind full-changeset pass), all verdicts pass; 5 defects fixed in round 1, 3 in round 2, zero new in round 3. Static S-01..S-12 conditions preserved: declarative-only package, versions synchronized to 0.1.5, marketplace ref pinned to the GPG-signed `v0.1.5` tag, checksums regenerated.
+- Open obligation: the F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14/F-15 live regression has not been run on 0.1.5 and must pass before the next release.
+- Scope guard: no Hook, MCP server, executable runtime, or persistent workflow state was introduced.
+
 ## Acceptance
 
 - Static checks：全部 PASS。0.1.3 配置、权限和结构检查 32/32 PASS；S-03/S-04/S-05/S-06/S-10 已于 2026-08-19 在 0.1.3 新会话实测通过（Skill 加载、`/ultracode` 可用、四类 agent 实际派发、模型/档位生效）；0.1.4 通过同步版本字段、固定 marketplace ref 并发布 GPG 签名 `v0.1.4` tag 关闭 S-12。无剩余静态门禁失败项。
@@ -108,8 +116,8 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 
 ## Remaining Manual Steps
 
-- Mandatory：none. All defined release and acceptance gates are closed.
-- Optional：add GPG public key `6B699BE4A10CE49F` to GitHub (Settings → SSH and GPG keys) so the tag displays the Verified badge; refresh the ZCode marketplace to 0.1.4 and recheck loading in a new session.
+- Mandatory: re-run the F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14/F-15 regression on the released 0.1.5 package in a fresh ZCode session before the next release (include the three v0.1.5 fix-seam probes listed in docs/08 §13).
+- Optional：add GPG public key `6B699BE4A10CE49F` to GitHub (Settings → SSH and GPG keys) so the tag displays the Verified badge; refresh the ZCode marketplace to 0.1.5 and recheck loading in a new session.
 - 已完成（2026-08-19，docs/08 §11）：0.1.3 新会话加载（S-03/04/05/06/10）与四类 agent 实际派发；强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 实跑 PASS；写任务确认只更新 SCOPE 文件（本次未行使 `.zcode` todo/log 豁免，为零写入）；worker-review 确认只有 Read/Glob/Grep、不访问 `.zcode`、只通过 ZCode subagent 返回结果；writer/reviewer 的 symlink/junction/reparse-point 穿透与 TOCTOU 并发替换场景确认每次访问前重新解析、拒绝一切越出可信工作区/SCOPE 的访问，宿主不能原子绑定真实目标时任务判 blocked。
 
 ## Risks

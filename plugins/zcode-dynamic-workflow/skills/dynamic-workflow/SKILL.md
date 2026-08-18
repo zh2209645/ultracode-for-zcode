@@ -4,33 +4,48 @@ description: Use for substantive coding, refactoring, investigation, review, mig
 when_to_use: Use when work may benefit from isolated context, parallel subagents, model-tier routing, or dependency-aware execution. Do not use for a trivial single-step request that the primary Agent can complete faster and safely.
 license: MIT
 metadata:
-  version: 0.1.4
+  version: 0.1.5
 ---
 
 # Dynamic Workflow
 
-The primary Agent is the only orchestrator. Keep the user goal, task graph, dependencies, integration decisions, and final verification in the primary context.
+The primary Agent is the only orchestrator. Keep the user goal, task graph, dependencies, routing decisions, integration results, and final verification in the primary context.
 
-## 1. Decide whether delegation helps
+The primary context is the scarcest resource. It holds plans, decisions, and verified conclusions — not raw file bodies or exploration noise. Keep it clean: prefer targeted evidence (paths, line numbers, short quotes) over pasting whole files, let subagents carry the file-heavy detail, and do not re-derive in the primary context what a worker result already answers.
 
-Work directly when the task is small, clear, low risk, and cheaper to complete than to delegate.
+## 1. Size the request first, then decide how to work
 
-Use ZCode's built-in `Explore` for read-only repository search, call-chain mapping, implementation discovery, and evidence gathering.
+Before touching any file, assess the whole user request: how many files it likely reads or modifies, how clear the approach is, and what could be missed or broken.
+
+Work directly only when the request stays within reading or modifying a few files with a clear approach and low risk, and delegation would cost more for equal reliability. That is the single default for direct execution.
+
+Once the request exceeds that scope — multi-part work, unclear extent, cross-module impact, or a real chance of omissions or new regressions — stop and plan the workflow first (section 2), sized to this specific task, instead of improvising file by file. Planning exists to prevent omissions and side effects, not to add ceremony.
+
+Use ZCode's built-in `Explore` for read-only repository search, call-chain mapping, implementation discovery, and evidence gathering. Do not bulk-read files in the primary context when a targeted Explore result (paths, line numbers, short quotes) is enough; ordinary analysis stays with the primary Agent but works from that targeted evidence.
 
 Delegate only atomic tasks with clear scope and acceptance criteria.
 
+### Orchestrator mode
+
+When the user invokes an orchestration command that mounts this skill (for example `/ultracode`), the primary Agent works as the orchestrator by default, not as the executor:
+
+- Delegate execution: read-only discovery to `Explore`, file changes to the write tiers of section 3, independent verdicts to `worker-review`. File-heavy reading and intermediate detail stay in subagent contexts, keeping the primary context clean. This mode overrides both the section 1 direct-work default and the section 3 default of `0-2: primary Agent works directly`: non-trivial execution work still goes to a worker, and the only direct execution is listed below.
+- The primary Agent still performs its own duties: decomposition, task contracts, wave execution, integration, running verification commands, and the final answer.
+- Execute a task yourself only when (a) it is trivial — typically a single localized edit such as a typo fix — and direct work is genuinely cheaper and equally reliable, so delegation would be pure ceremony; or (b) a subagent explicitly failed or did not complete the task (`blocked`, `partial`, or `done` without usable evidence) and re-dispatch or escalation under section 6 can no longer satisfy the acceptance criteria (when the same problem has failed twice, section 3's worker-review adjudication runs before any takeover write). While the acceptance criteria are still reachable, prefer re-dispatch or escalation over takeover.
+- Work that cannot be decomposed into atomic tasks even after re-planning, and that couples several interrelated file modifications, also stays with the primary Agent: any split would force workers to act on fragments whose final shape depends on unfinished edits elsewhere (a sequential pipeline of self-contained, specifiable steps is not such a case), sacrificing exactly the quality delegation is meant to protect. This exception is for genuinely unsplittable work only — if a meaningful split into dependent waves still exists, delegate — and significant or high-risk results should still go through `worker-review` afterwards.
+
 ## 2. Build a temporary task graph
 
-For non-trivial work:
+For work that exceeds the few-files scope of section 1:
 
-1. Identify the user goal and constraints.
-2. Split the work into atomic tasks.
+1. Identify the user goal, constraints, and done conditions.
+2. Split the work into atomic tasks, then check the split back against the original request so nothing is dropped.
 3. Mark dependencies and possible write conflicts, including shared workspace `.zcode` todo/log files.
 4. Group independent tasks into execution waves.
 5. Keep tasks that write the same file or depend on another result in separate waves.
 6. Run at most 3 write-capable workers concurrently. Read-only built-in `Explore` and `worker-review` tasks may raise the total concurrent subagent count to 10 when they are genuinely independent; 10 is a ceiling, not a target.
 
-Dynamic planning belongs to the primary Agent. Do not use a fixed pipeline when the task does not need one.
+Dynamic planning belongs to the primary Agent. Do not use a fixed pipeline when the task does not need one. The graph is the primary Agent's protection against omissions and regressions: every part of the request maps to a task with acceptance criteria, and every cross-task side effect surfaces as a dependency or a separate wave.
 
 ## 3. Score each task
 
@@ -84,13 +99,13 @@ SCOPE is a task contract, not a filesystem sandbox. Before delegating any file a
 
 Launch independent tasks together, up to 3 write-capable workers. Additional concurrent tasks up to the total limit of 10 must use read-only built-in `Explore` or `worker-review`.
 
-Use foreground parallel work when the next step needs all results. Use background work only when it is long-running and does not block the current path.
+Use foreground parallel work when the next step needs all results. Use background work only when it is long-running and does not block the current path. Keep wave bookkeeping in the primary context compact: statuses and evidence pointers, not copies of worker transcripts.
 
 Subagents cannot spawn subagents. Workers must finish only their assigned task and return control to the primary Agent.
 
 ## 6. Integrate and re-plan
 
-After each wave:
+After each wave, integrate from the workers' RETURN blocks — status, summary, evidence pointers — and re-open changed files in the primary context only when verification at the section 7 risk level calls for direct inspection:
 
 1. Check that results match the assigned scope.
 2. Resolve contradictions and write conflicts in the primary context. If two workers return conflicting results, re-check the evidence; if still unresolved, use `worker-review` for independent adjudication.
