@@ -1,5 +1,6 @@
 # 08 — 验收测试记录
 
+- 插件版本：0.1.4（2026-08-19 由 GPG 签名 tag `v0.1.4` 正式发布；行为回归证据来自未改变运行组件的 0.1.3）
 - 日期：2026-08-18
 - ZCode 版本：本机桌面版 3.7.7（0.1.3 回归当日确认；0.1.0 历史记录当日版本未单独记录）
 - 主 Agent 模型：`builtin:zai-coding-plan/GLM-5.3`
@@ -326,7 +327,8 @@ ZCode 官方文档确认内置 subagent 只有 `general-purpose` 和只读 `Expl
 > injection treated as data, full STATUS/VERDICT/…/RISKS format). Symlink and junction paths
 > were rejected at canonical resolution before any dispatch; a TOCTOU path swap was blocked
 > on re-resolution (host cannot atomically bind the target → `blocked` by policy). Routing
-> accuracy 8/8; deep misuse 0; S-12 remains PARTIAL only for tag protection/signature.
+> accuracy 8/8 and deep misuse 0. At that regression checkpoint S-12 remained PARTIAL only
+> for tag protection/signature; the signed v0.1.4 release subsequently closed it (§12).
 
 ### 环境与组件加载（流程第 3 步）
 

@@ -1,140 +1,139 @@
-# ZCode Dynamic Workflow MVP 迁移包
+# ZCode Dynamic Workflow
 
-> 面向本地 LLM 的离线实施资料。目标是从 **oh-my-claudecode（OMC）** 中提炼最有价值的“按任务难度分级委派”思想，在 ZCode 中实现一个轻量、原生、无额外运行时的 Dynamic Workflow MVP。
+`zcode-dynamic-workflow` is a lightweight, native ZCode plugin for dependency-aware task delegation. It lets the primary Agent keep control of the overall goal while routing each atomic subtask to the lightest capable execution path.
 
-## 0. 当前状态 / Current Status（2026-08-19）
+Current release: **v0.1.4** (formally published from the signed `v0.1.4` tag on 2026-08-19).
 
-- 当前版本 0.1.4：签名 tag `v0.1.4` 已发布（ed25519 GPG `6B699BE4A10CE49F`，`git verify-tag` good signature），marketplace source 固定该 tag，三处版本一致——S-12 全部通过，无剩余门禁项。
-- 0.1.3 回归实测：强制场景 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 全部 PASS（8/8），静态 S-03/S-04/S-05/S-06/S-10 通过；插件已经 GitHub marketplace 在应用内更新安装（ZCode 3.7.7）。完整记录见 `docs/08-TEST-RECORD.md` §11–§12 与 `docs/09-FINAL-REPORT.md`。
-- 建议（非门禁）：GitHub 账号添加签名公钥以显示 Verified 徽标；ZCode 刷新 marketplace 更新至 0.1.4 并新开会话复验。
+## What it does
 
-> **English abstract**: This kit distills the task-difficulty-based delegation idea from
-> oh-my-claudecode into a lightweight, native ZCode plugin. The primary Agent plans the task
-> graph itself and routes each atomic subtask to direct work, built-in `Explore`, read-only
-> `worker-review`, or one of three write-capable tiers (`worker-fast` / `worker-standard` /
-> `worker-deep`), running independent tasks as parallel waves and dependent tasks in order.
-> The plugin is declarative Markdown/JSON only — no hooks, no MCP, no extra runtime, no
-> persistent state. v0.1.3 passed all eight mandatory regression scenarios in-app on ZCode
-> 3.7.7 (2026-08-19); the docs-only v0.1.4 release pins the marketplace to the GPG-signed
-> `v0.1.4` tag, closing S-12.
+The plugin adds a dynamic workflow policy that helps the primary Agent:
 
-## 1. 一句话目标
+- complete trivial work directly instead of delegating it;
+- use ZCode's built-in `Explore` agent for read-only discovery and evidence gathering;
+- use `worker-fast` for simple, mechanical, low-risk changes;
+- use `worker-standard` for normal implementation and test work;
+- use `worker-deep` for clearly scoped, high-complexity file changes;
+- use the read-only `worker-review` for high-assurance review, adjudication, and acceptance-evidence checks;
+- run independent tasks in parallel and dependent tasks in ordered waves;
+- escalate a failed write task at most once, then replan or report the blocker;
+- verify evidence and produce the final response itself.
 
-让 **ZCode 主 Agent 自己规划任务图**，并根据每个子任务的难度、风险和独立性，选择：
+The primary Agent is always the sole orchestrator. Workers receive atomic task contracts and never take over the user's overall objective or create subagents of their own.
 
-- 主 Agent 直接完成；
-- ZCode 内置 `Explore` 做只读探索；
-- `worker-fast` 完成简单、低风险任务；
-- `worker-standard` 完成常规实现；
-- `worker-deep` 完成明确需要写文件的复杂或高风险改动；
-- `worker-review` 使用高性能模型和只读工具完成高风险独立复核、裁决和验收证据检查；一般探索与普通分析不使用它。
+## Routing model
 
-插件不替主 Agent 做规划，也不实现 Team runtime、任务队列、心跳、状态机、Ralph 循环或 HUD。
+| Work type | Default path |
+|---|---|
+| Trivial, local, low-risk change | Primary Agent |
+| Read-only repository exploration | Built-in `Explore` |
+| High-risk independent review or adjudication | `worker-review` |
+| Simple, mechanical file change | `worker-fast` |
+| Standard implementation or tests | `worker-standard` |
+| Complex, cross-module, or high-risk file change | `worker-deep` |
 
-## 2. 为什么采用这个范围
+Write tasks are scored by scope, ambiguity, coupling, risk, and verification cost. Task type overrides the score: discovery stays with `Explore`, ordinary analysis stays with the primary Agent, and high-assurance independent review goes to `worker-review`.
 
-当前高性能模型已经具备较强的任务拆解、上下文理解和长程执行能力。首版真正有价值的不是再造一套重型 harness，而是向主 Agent 提供一套稳定、明确、低摩擦的委派策略：
+## Components
 
-1. **什么时候不应该委派**；
-2. **什么时候使用只读探索 Agent**；
-3. **如何判断子任务难度**；
-4. **如何选择快、标准、深度三个性能层级**；
-5. **如何把独立任务并行，把有依赖任务分波次执行**；
-6. **如何整合结果、升级失败任务并完成最低限度验证**。
-
-## 3. 包内内容
+The release contains only declarative JSON and Markdown:
 
 ```text
-zcode-dynamic-workflow-mvp-kit/
-├── .gitattributes
-├── .gitignore
+marketplace.json
+plugins/zcode-dynamic-workflow/
+├── .zcode-plugin/plugin.json
+├── commands/ultracode.md
+├── skills/dynamic-workflow/SKILL.md
+├── agents/
+│   ├── worker-fast.md
+│   ├── worker-standard.md
+│   ├── worker-deep.md
+│   └── worker-review.md
+├── MODEL-MAPPING.md
 ├── README.md
-├── AGENTS.md
-├── NOTICE.md
-├── TASKS.md
-├── ZCODE_DYNAMIC_WORKFLOW_MVP.md
-├── SHA256SUMS.txt
-├── marketplace.json
-├── docs/
-│   ├── 01-PROJECT-BRIEF.md
-│   ├── 02-MVP-ARCHITECTURE.md
-│   ├── 03-DELEGATION-POLICY.md
-│   ├── 04-MIGRATION-PLAN.md
-│   ├── 05-ACCEPTANCE-TESTS.md
-│   ├── 06-LOCAL-LLM-PROMPT.md
-│   ├── 07-SOURCE-MAP.md
-│   ├── 08-TEST-RECORD.md
-│   └── 09-FINAL-REPORT.md
-├── plugins/
-│   └── zcode-dynamic-workflow/
-│       ├── .zcode-plugin/plugin.json
-│       ├── commands/ultracode.md
-│       ├── skills/dynamic-workflow/SKILL.md
-│       ├── agents/
-│       │   ├── worker-fast.md
-│       │   ├── worker-standard.md
-│       │   ├── worker-deep.md
-│       │   └── worker-review.md
-│       ├── README.md
-│       ├── MODEL-MAPPING.md
-│       └── LICENSE
-└── references/
-    ├── omc/
-    │   ├── README.md
-    │   ├── ultrawork.SKILL.md
-    │   ├── agent-tiers.md
-    │   ├── executor-notes.md
-    │   ├── OMC_PLUGIN_MANIFEST_SNAPSHOT.json
-    │   └── LICENSE
-    └── zcode/
-        └── ZCODE_CAPABILITY_NOTES.md
+└── LICENSE
 ```
 
-## 4. 给本地 LLM 的推荐阅读顺序
+It adds:
 
-1. `AGENTS.md`
-2. `ZCODE_DYNAMIC_WORKFLOW_MVP.md`
-3. `docs/03-DELEGATION-POLICY.md`
-4. `docs/04-MIGRATION-PLAN.md`
-5. `docs/05-ACCEPTANCE-TESTS.md`
-6. `plugins/zcode-dynamic-workflow/` 下的参考骨架
-7. `references/` 下的离线参考材料
+- the `/ultracode` command;
+- the `dynamic-workflow` skill;
+- three write-capable worker tiers;
+- one read-only reviewer.
 
-也可以直接把 `docs/06-LOCAL-LLM-PROMPT.md` 整份交给本地 LLM。
+It does **not** add hooks, MCP servers, a Node/Python/TypeScript runtime, persistent workflow state, a Team or swarm service, a Ralph loop, a HUD, or automatic worktree management.
 
-## 5. 首版交付物
+## Installation
 
-首版完成后应只有以下运行组件：
+1. Open **Settings → Plugins → Discover** in ZCode.
+2. Select **+** and add this marketplace repository:
 
-- 1 个 ZCode 插件 manifest；
-- 1 个动态委派 Skill；
-- 1 个显式 `/ultracode` 命令；
-- 3 个不同性能层级的可写 worker；
-- 1 个高性能只读 reviewer；
-- 0 个 Hook；
-- 0 个 MCP；
-- 0 个 Node/TypeScript runtime；
-- 0 个持久状态文件。
+   ```text
+   https://github.com/zh2209645/ultracode-for-zcode
+   ```
 
-## 6. 模型映射（已完成）
+3. Install and enable `zcode-dynamic-workflow`.
+4. Start a new ZCode session so the command, skill, and agents are loaded.
 
-三个写 worker 和一个只读 reviewer 已配置为本机真实模型 ID（更新日期 2026-08-19）：
+The marketplace source is pinned to the signed `v0.1.4` release tag.
 
-- `worker-fast` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: low`
-- `worker-standard` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: high`
-- `worker-deep` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: max`
-- `worker-review` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: max`
+## Usage
 
-本机唯一激活的 provider 是 `builtin:zai-coding-plan`，其 `GLM-5.3` 同时支持
-`low`/`high`/`max` 三档思考等级，因此采用“同一模型 + 三档思考等级”的分层方式。
-若要在其他机器使用，按 `plugins/zcode-dynamic-workflow/MODEL-MAPPING.md` 中的
-步骤替换模型 ID 即可。
+Describe a multi-step task normally and allow the skill to trigger, or invoke it explicitly:
 
-## 7. 来源快照
+```text
+/ultracode Refactor the authentication module, preserve API compatibility, and update the tests.
+```
 
-- 文档编制日期：2026-08-18
-- OMC manifest 观察版本：`4.15.10`
-- OMC 许可证：MIT
-- ZCode 能力依据：官方 Plugin、Subagents、Skill、Hooks、Agent 文档
+For small tasks, no special command is needed—the policy intentionally avoids unnecessary delegation.
 
-来源、兼容边界和许可证要求见 `docs/07-SOURCE-MAP.md`。
+## Model mapping
+
+The published package uses one verified model with different reasoning levels:
+
+| Agent | Model | Thought level | Max turns |
+|---|---|---:|---:|
+| `worker-fast` | `builtin:zai-coding-plan/GLM-5.3` | `low` | 12 |
+| `worker-standard` | `builtin:zai-coding-plan/GLM-5.3` | `high` | 24 |
+| `worker-deep` | `builtin:zai-coding-plan/GLM-5.3` | `max` | 36 |
+| `worker-review` | `builtin:zai-coding-plan/GLM-5.3` | `max` | 30 |
+
+Model availability is machine-specific. If your ZCode installation uses another provider, update the four agent frontmatter entries as described in [MODEL-MAPPING.md](plugins/zcode-dynamic-workflow/MODEL-MAPPING.md).
+
+## Security boundaries
+
+- All four agents set `injectAgentsMd: false`.
+- Write workers allow only `Read`, `Edit`, `Write`, `Glob`, and `Grep`.
+- `worker-review` allows only `Read`, `Glob`, and `Grep`.
+- Workers have no shell, web, or MCP tools.
+- Command execution, network access, and final test/build verification remain with the primary Agent.
+- Write-capable workers should run under ZCode **Confirm Before Changes** or an equivalent restricted workspace mode, never unrestricted access in an untrusted repository.
+- The plugin creates no recovery database or other persistent runtime state.
+
+See [the delegation policy](docs/03-DELEGATION-POLICY.md) for the full task-contract, path-safety, concurrency, escalation, and evidence rules.
+
+## Validation and release status
+
+The plugin passed all eight mandatory behavioral scenarios on ZCode 3.7.7 using real plugin subagents: F-01, F-02, F-05, F-07, F-09, F-12, F-13, and F-14. Routing accuracy was 8/8, deep-worker misuse was 0%, and no nested delegation or infinite retry occurred.
+
+The behavioral regression was executed on v0.1.3. Release v0.1.4 is a declarative documentation and release-integrity update with unchanged Skill, Command, and Agent behavior. It closed the final S-12 gate by synchronizing all version fields, pinning the marketplace to `v0.1.4`, and publishing a valid GPG-signed tag. There are no remaining mandatory acceptance failures.
+
+Evidence:
+
+- [Acceptance criteria](docs/05-ACCEPTANCE-TESTS.md)
+- [Test record](docs/08-TEST-RECORD.md)
+- [Final implementation report](docs/09-FINAL-REPORT.md)
+- [SHA-256 checksums](SHA256SUMS.txt)
+
+## Documentation
+
+- [MVP design and architecture](ZCODE_DYNAMIC_WORKFLOW_MVP.md)
+- [Delegation policy](docs/03-DELEGATION-POLICY.md)
+- [Migration and release plan](docs/04-MIGRATION-PLAN.md)
+- [Model mapping](plugins/zcode-dynamic-workflow/MODEL-MAPPING.md)
+- [Plugin package README](plugins/zcode-dynamic-workflow/README.md)
+
+## License and attribution
+
+This project is distributed under the MIT License. Its delegation concepts are inspired by [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode), also distributed under the MIT License. See [NOTICE.md](NOTICE.md) and the preserved [upstream license](references/omc/LICENSE).
+
+This is an independent, unofficial ZCode plugin and is not affiliated with the ZCode or OMC teams.

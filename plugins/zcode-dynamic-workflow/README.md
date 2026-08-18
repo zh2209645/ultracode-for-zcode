@@ -18,8 +18,8 @@ a GPG-signed tag and the marketplace source is pinned to it; v0.1.3 was verified
 from GitHub on ZCode 3.7.7 (mandatory regression 8/8 PASS, 2026-08-19). Protect release
 tags from force-updates. To install:
 
-1. Push this repository (the kit root containing `marketplace.json`) to GitHub.
-2. In ZCode: Settings → Plugins → Discover → `+` → paste the GitHub repository URL.
+1. In ZCode, open Settings → Plugins → Discover → `+`.
+2. Add the marketplace repository: `https://github.com/zh2209645/ultracode-for-zcode`.
 3. Install and enable `zcode-dynamic-workflow`.
 4. Start a new session; the command, skill, three write workers, and read-only reviewer become available.
 
@@ -46,4 +46,4 @@ No hooks, MCP, runtime process, persistent state, Team server, Ralph loop, HUD, 
 - At most 3 write-capable workers run concurrently. Genuinely independent read-only Explore or `worker-review` tasks may raise total concurrency to 10.
 - Workspace `.zcode/**` is available only to the three write workers when the delegated task explicitly writes files, and only for task-owned todo/log records. Explore and `worker-review` report through the ZCode subagent result; `worker-review` cannot write files and must not read `.zcode`. User-level `~/.zcode`, plugin caches, credentials, unrelated session logs, and plugin-owned recovery databases remain out of scope. Shared `.zcode` files are updated serially; parallel write workers use distinct log files.
 - Residual risk: allowlists constrain tools, not file paths. Use ZCode `Confirm Before Changes` (the documented default) or an equivalently restrictive workspace sandbox for worker writes; do not use write-capable workers in `Full Access` for untrusted repositories. Review the requested path before approving it.
-- `marketplace.json` is pinned to the versioned `v0.1.3` release tag. Protect or sign release tags, and bump the manifest versions and tag together for every release.
+- `marketplace.json` is pinned to the signed `v0.1.4` release tag. Protect or sign release tags, and bump the marketplace, plugin manifest, Skill metadata, and tag together for every release.

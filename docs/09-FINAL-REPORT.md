@@ -84,9 +84,17 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 - 新增根目录 `.gitattributes`，统一文本文件为 LF，确保 SHA-256 清单跨平台可复现。
 - 新增根目录 `.gitignore` 排除 `.omo/` 本地审计工件，避免 `git add -A` 污染发布提交。
 
+## 0.1.4 Formal Release
+
+- Release type：documentation and release-integrity update; Skill, Command, and Agent behavior is unchanged from the verified 0.1.3 package.
+- Version alignment：`marketplace.json`, `.zcode-plugin/plugin.json`, and Skill metadata all report 0.1.4; marketplace source ref is `v0.1.4`.
+- Release integrity：`v0.1.4` was published as a GPG-signed tag using ed25519 key `6B699BE4A10CE49F`; `git verify-tag v0.1.4` returned a good signature.
+- Acceptance impact：S-12 moved from PARTIAL at the 0.1.3 checkpoint to PASS. Combined with the unchanged-runtime 0.1.3 regression, v0.1.4 has no remaining mandatory acceptance failures.
+- Scope guard：no Hook, MCP server, executable runtime, or persistent workflow state was introduced.
+
 ## Acceptance
 
-- Static checks：0.1.3 配置、权限和结构检查 32/32 PASS；S-03/S-04/S-05/S-06/S-10 已于 2026-08-19 在 0.1.3 新会话实测通过（Skill 加载、`/ultracode` 可用、四类 agent 实际派发、模型/档位生效）；S-12 的 tag 已发布且远端更新安装已实证，仅剩"受保护或签名"加固未满足，保持 PARTIAL。
+- Static checks：全部 PASS。0.1.3 配置、权限和结构检查 32/32 PASS；S-03/S-04/S-05/S-06/S-10 已于 2026-08-19 在 0.1.3 新会话实测通过（Skill 加载、`/ultracode` 可用、四类 agent 实际派发、模型/档位生效）；0.1.4 通过同步版本字段、固定 marketplace ref 并发布 GPG 签名 `v0.1.4` tag 关闭 S-12。无剩余静态门禁失败项。
 - Functional scenarios：0.1.3 强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 已于 2026-08-19 在 0.1.3 新会话全部实跑 PASS（真实插件 subagent，非替身；路由正确率 8/8，deep 滥用率 0，无 nested delegation、无无限重试），含 F-13/F-14 注入诱导与 symlink/junction/TOCTOU 路径攻击拦截；完整记录见 docs/08 §11。
 - In-app confirmation（2026-08-19，ZCode 3.7.7）：插件经 GitHub marketplace（git-subdir）在应用内更新至 0.1.3；`/ultracode` 可用；worker-fast/worker-standard/worker-deep/worker-review 四类均实际派发成功（standard×2、deep×2、fast×2、review×3、Explore×1）。插件 agent 不出现在 Settings → Subagents 属预期（该页仅列用户级 agent）。
 - 如实记录的局限：0.1.0 历史场景曾以"内置 subagent + worker 系统提示词全文"替身执行（插件安装前）；0.1.3 强制回归已全部改为真实插件 subagent。low/high/max 档位差异未做逐一量化对比（各 worker 一次通过，无升级样本）；`.zcode` todo/log 豁免未主动行使（观察为零写入的更严格情形）。
@@ -100,8 +108,8 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 
 ## Remaining Manual Steps
 
-- 已完成（2026-08-19，docs/08 §12）：S-12 收口——版本三处升至 0.1.4，`git tag -s` 签名发布 `v0.1.4`（`git verify-tag` good signature），marketplace ref 固定 `v0.1.4`。原 v0.1.3 tag 未签名的问题由本次签名发布解决。
-- 建议（非门禁）：GitHub 账号添加 GPG 公钥 `6B699BE4A10CE49F`（Settings → SSH and GPG keys）使 tag 获得 Verified 徽标；ZCode 刷新 marketplace 更新至 0.1.4 并新开会话复验加载。
+- Mandatory：none. All defined release and acceptance gates are closed.
+- Optional：add GPG public key `6B699BE4A10CE49F` to GitHub (Settings → SSH and GPG keys) so the tag displays the Verified badge; refresh the ZCode marketplace to 0.1.4 and recheck loading in a new session.
 - 已完成（2026-08-19，docs/08 §11）：0.1.3 新会话加载（S-03/04/05/06/10）与四类 agent 实际派发；强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 实跑 PASS；写任务确认只更新 SCOPE 文件（本次未行使 `.zcode` todo/log 豁免，为零写入）；worker-review 确认只有 Read/Glob/Grep、不访问 `.zcode`、只通过 ZCode subagent 返回结果；writer/reviewer 的 symlink/junction/reparse-point 穿透与 TOCTOU 并发替换场景确认每次访问前重新解析、拒绝一切越出可信工作区/SCOPE 的访问，宿主不能原子绑定真实目标时任务判 blocked。
 
 ## Risks
