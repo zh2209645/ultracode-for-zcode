@@ -53,7 +53,7 @@ Overrides:
 
 - Read-only codebase research -> built-in `Explore`.
 - Security, authentication, authorization, data migration, public API compatibility, architecture, or cross-module refactoring -> at least `worker-deep` analysis or independent deep review.
-- Mechanical edits, small documentation changes, and precisely scoped low-risk work -> prefer `worker-fast`.
+- Mechanical edits, small documentation changes, and precisely scoped low-risk work -> prefer `worker-fast`, but only when delegation is still justified under section 1 (never delegate a trivial task just to use this rule).
 - Normal implementation, debugging, tests, and pattern-following multi-file changes -> prefer `worker-standard`.
 
 Choose the lightest tier that can reliably satisfy the acceptance criteria.
@@ -84,9 +84,9 @@ Subagents cannot spawn subagents. Workers must finish only their assigned task a
 After each wave:
 
 1. Check that results match the assigned scope.
-2. Resolve contradictions and write conflicts in the primary context.
-3. Update the task graph when new information changes assumptions.
-4. Do not trust a worker's `done` status without relevant evidence.
+2. Resolve contradictions and write conflicts in the primary context. If two workers return conflicting results, re-check the evidence; if still unresolved, spend that task's one escalation on a `worker-deep` independent adjudication.
+3. Update the task graph when new information changes assumptions. Tasks whose upstream input ended `partial` or `blocked` must be re-scoped or held, not launched unchanged.
+4. Do not trust a worker's `done` status without relevant evidence. A `done` returned without usable evidence: ask for the evidence once; if it is still absent, treat the task as `partial` and mark it unverified in the final answer. A worker that stops before returning STATUS also counts as `partial`.
 
 Escalation:
 
@@ -94,7 +94,7 @@ Escalation:
 - standard failure, architectural issue, or high-risk discovery -> deep.
 - deep failure -> primary Agent re-plans, narrows scope, or reports blocked.
 
-Automatically escalate a task at most once. Carry prior evidence and failure details into the upgraded prompt.
+Automatically escalate a task at most once, and do not repeatedly re-dispatch the same task to the same tier. Carry prior evidence and failure details into the upgraded prompt.
 
 ## 7. Verify by risk
 
@@ -135,3 +135,5 @@ The primary Agent should summarize:
 - files changed or evidence found;
 - verification actually performed;
 - unresolved risks or blocked items.
+
+Before answering, collect any pending background results, or explicitly report them as still pending.

@@ -1,7 +1,7 @@
 ---
 name: worker-fast
 description: Fast worker for small, explicit, low-risk, mostly mechanical tasks with narrow scope and clear acceptance criteria. Use for simple edits, documentation, configuration, straightforward tests, or precisely specified changes. Do not use for architecture, unclear root causes, security, data, authentication, authorization, or cross-module refactoring.
-model: REPLACE_WITH_FAST_MODEL_ID
+model: "builtin:zai-coding-plan/GLM-5.3"
 thoughtLevel: low
 maxTurns: 12
 injectAgentsMd: true
@@ -23,7 +23,7 @@ SUMMARY
 - concise result
 
 FILES / EVIDENCE
-- files changed and key locations, or evidence found
+- files changed and key locations (cite file paths and line numbers), or evidence found
 
 VERIFICATION
 - checks actually run and results

@@ -1,7 +1,7 @@
 ---
 name: worker-deep
 description: Deep reasoning worker for architecture, complex root-cause analysis, cross-module refactoring, security/auth/data/API compatibility risks, difficult implementation, and independent review of important changes.
-model: REPLACE_WITH_DEEP_MODEL_ID
+model: "builtin:zai-coding-plan/GLM-5.3"
 thoughtLevel: max
 maxTurns: 36
 injectAgentsMd: true

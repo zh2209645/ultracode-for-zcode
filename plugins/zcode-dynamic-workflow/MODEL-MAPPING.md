@@ -1,69 +1,53 @@
 # Model Mapping
 
-The three bundled Agent files contain placeholders and are not ready for final installation until they are replaced with real ZCode model IDs.
+Status: **configured for this machine** (2026-08-18). The three Agent files use real
+model IDs and are ready to install.
 
-## Required replacements
+## Active mapping (Option B — one model, three effort levels)
 
-```text
-REPLACE_WITH_FAST_MODEL_ID
-REPLACE_WITH_STANDARD_MODEL_ID
-REPLACE_WITH_DEEP_MODEL_ID
-```
+| Agent | model | thoughtLevel | maxTurns |
+|---|---|---|---|
+| worker-fast | `builtin:zai-coding-plan/GLM-5.3` | `low` | 12 |
+| worker-standard | `builtin:zai-coding-plan/GLM-5.3` | `high` | 24 |
+| worker-deep | `builtin:zai-coding-plan/GLM-5.3` | `max` | 36 |
 
-## Option A — Multiple models
+The active provider on this machine is `builtin:zai-coding-plan` (Z.ai Coding Plan,
+the only provider marked `available` in the local coding-plan cache). `GLM-5.3`
+supports the reasoning levels `low`, `high`, and `max` according to the local model
+registry, and the runtime logs show the qualified form
+`builtin:zai-coding-plan/GLM-5.3` as the canonical model reference. Using one model
+with three effort levels creates the fast/standard/deep tiers without depending on
+multiple providers.
 
-Choose:
+## Alternative mappings
 
-- Fast: low-latency or low-cost model that can reliably do narrow tasks.
-- Standard: balanced coding model used for most implementation.
-- Deep: strongest available reasoning and coding model.
+### Option A — Multiple models
 
-Example shape only:
+Other models visible on this machine but **not used** in the first version:
 
-```yaml
-# worker-fast
-model: <real-fast-model-id>
-thoughtLevel: low
+- `GLM-5.2` (1M context, no reasoning variants registered)
+- `GLM-5-Turbo` / display name `glm-5-turbo` (200K context, reasoning variants
+  `enabled`/`off`)
+- `GLM-4.7` / display name `glm-4.7` (200K context)
 
-# worker-standard
-model: <real-standard-model-id>
-thoughtLevel: high
+A future refinement may move `worker-fast` to `glm-5-turbo` for genuinely lower
+latency and cost, but its exact model-ID spelling and thoughtLevel values are not
+yet confirmed by any local session log, so the first version keeps the single-model
+mapping that is fully evidenced.
 
-# worker-deep
-model: <real-deep-model-id>
-thoughtLevel: max
-```
+### Changing the mapping on another machine
 
-Do not assume the model's display name is its model ID.
-
-## Option B — One model, three effort levels
-
-Use the same concrete model ID for all three Agents and configure distinct supported thought levels.
-
-For a model supporting `low`, `high`, and `max`:
-
-```yaml
-worker-fast: low
-worker-standard: high
-worker-deep: max
-```
-
-This is often the simplest MVP because it creates performance tiers without depending on several providers.
-
-## Important ZCode behavior
-
-- A subagent-specific `thoughtLevel` only takes effect when the Agent declares a specific model.
-- With `model: inherit`, the subagent follows the primary Agent and ignores its own thought level.
-- Supported levels depend on the model.
-- Agent configuration changes should be tested in a new session.
-- Plugin subagents may be read-only in the UI, so edit the Markdown files before packaging.
+1. Open ZCode model settings and copy the real model IDs (not display names).
+2. Edit `agents/worker-*.md` frontmatter: `model` and a supported `thoughtLevel`.
+3. Remember: a subagent `thoughtLevel` only takes effect when `model` names a
+   specific model; `model: inherit` follows the primary Agent and ignores it.
+4. Start a new ZCode session so the changes load.
+5. Invoke each worker with a trivial task and confirm the expected model and
+   effort level are used.
 
 ## Validation
 
-After replacement:
-
-1. Search the repository for `REPLACE_WITH_`.
+1. Search the plugin package for `REPLACE_WITH_` — must find nothing.
 2. Start a new ZCode session.
 3. Explicitly invoke each worker with a trivial task.
 4. Confirm the expected model and effort are used.
-5. Record the mapping in the final implementation report.

@@ -41,7 +41,9 @@ zcode-dynamic-workflow-mvp-kit/
 │   ├── 04-MIGRATION-PLAN.md
 │   ├── 05-ACCEPTANCE-TESTS.md
 │   ├── 06-LOCAL-LLM-PROMPT.md
-│   └── 07-SOURCE-MAP.md
+│   ├── 07-SOURCE-MAP.md
+│   ├── 08-TEST-RECORD.md
+│   └── 09-FINAL-REPORT.md
 ├── plugins/
 │   └── zcode-dynamic-workflow/
 │       ├── .zcode-plugin/plugin.json
@@ -88,17 +90,18 @@ zcode-dynamic-workflow-mvp-kit/
 - 0 个 Node/TypeScript runtime；
 - 0 个持久状态文件。
 
-## 6. 使用前必须完成的配置
+## 6. 模型映射（已完成）
 
-参考骨架里的三个 Agent 使用占位模型 ID：
+三个 worker 已配置为本机真实模型 ID（完成日期 2026-08-18）：
 
-- `REPLACE_WITH_FAST_MODEL_ID`
-- `REPLACE_WITH_STANDARD_MODEL_ID`
-- `REPLACE_WITH_DEEP_MODEL_ID`
+- `worker-fast` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: low`
+- `worker-standard` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: high`
+- `worker-deep` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: max`
 
-实施者必须根据本机 ZCode 已连接的模型进行替换。若只有一个高性能模型，可使用同一模型 ID，并分别配置 `low`、`high`、`max` 思考等级，从而形成三个性能层级。
-
-详见 `plugins/zcode-dynamic-workflow/MODEL-MAPPING.md`。
+本机唯一激活的 provider 是 `builtin:zai-coding-plan`，其 `GLM-5.3` 同时支持
+`low`/`high`/`max` 三档思考等级，因此采用“同一模型 + 三档思考等级”的分层方式。
+若要在其他机器使用，按 `plugins/zcode-dynamic-workflow/MODEL-MAPPING.md` 中的
+步骤替换模型 ID 即可。
 
 ## 7. 来源快照
 

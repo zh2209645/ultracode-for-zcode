@@ -1,7 +1,7 @@
 ---
 name: worker-standard
 description: Balanced implementation worker for normal feature work, debugging, tests, documentation, and scoped multi-file changes that require solid codebase understanding but not major architecture decisions or high-risk security/data changes.
-model: REPLACE_WITH_STANDARD_MODEL_ID
+model: "builtin:zai-coding-plan/GLM-5.3"
 thoughtLevel: high
 maxTurns: 24
 injectAgentsMd: true
@@ -23,7 +23,7 @@ SUMMARY
 - concise result
 
 FILES / EVIDENCE
-- files changed and key locations, or evidence found
+- files changed and key locations (cite file paths and line numbers), or evidence found
 
 VERIFICATION
 - commands/checks actually run and results
