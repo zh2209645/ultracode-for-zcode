@@ -12,7 +12,7 @@
 
 | ID | 结果 | 证据 |
 |---|---|---|
-| S-01 | PASS | `marketplace.json` JSON 解析通过，source 解析到 `plugins/zcode-dynamic-workflow/.zcode-plugin/plugin.json` |
+| S-01 | PASS | `marketplace.json` JSON 解析通过；插件 source 为 `git-subdir` 对象形式（`url` + `path: plugins/zcode-dynamic-workflow`），与本机已验证可用的 claude-plugins-official 条目及 zcode 安装代码分支一致（相对路径字符串形式在 GitHub marketplace 安装时报 Unsupported source，已修复） |
 | S-02 | PASS | `plugin.json` name 符合 `^[a-z0-9][a-z0-9._-]{0,127}$`；skills/commands/agents 三个组件目录存在；marketplace 与 plugin 版本一致（0.1.0） |
 | S-03 | PASS | `skills/dynamic-workflow/SKILL.md` name 与目录一致，description 308 字符（<1024 限制） |
 | S-04 | PASS | `commands/ultracode.md` 含 description、`$ARGUMENTS`、`skills: dynamic-workflow`，文件名符合 `^[a-z0-9][a-z0-9_:-]{0,63}$` |

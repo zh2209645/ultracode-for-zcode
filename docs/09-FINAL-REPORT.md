@@ -20,6 +20,12 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 ## Files
 
 - 修改：
+  - `marketplace.json`（安装格式修复：插件 source 由相对路径字符串改为
+    `git-subdir` 对象形式 `{url, path, ref}`，指向 GitHub 仓库的
+    `plugins/zcode-dynamic-workflow` 子目录；移除 `pluginRoot` 与 `strict`。
+    根因：相对路径字符串仅适用于随应用内置的 marketplace；GitHub marketplace
+    的在库子目录插件需用 `git-subdir`——与 claude-plugins-official 的实际
+    可用条目及 zcode 运行时安装代码分支一致）
   - `plugins/zcode-dynamic-workflow/agents/worker-fast.md`（真实模型 ID；证据引用要求）
   - `plugins/zcode-dynamic-workflow/agents/worker-standard.md`（同上）
   - `plugins/zcode-dynamic-workflow/agents/worker-deep.md`（真实模型 ID）
@@ -35,7 +41,7 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
   - `docs/08-TEST-RECORD.md`（12 个功能场景 + 10 项静态检查的完整记录）
   - `docs/09-FINAL-REPORT.md`（本文件）
 - 删除：无
-- 未改动：`marketplace.json`、`.zcode-plugin/plugin.json`、`commands/ultracode.md`、
+- 未改动：`.zcode-plugin/plugin.json`、`commands/ultracode.md`、
   LICENSE、NOTICE.md、docs/01–07（结构本已合规；F-05 独立复核确认）
 
 ## Acceptance

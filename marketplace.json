@@ -1,11 +1,15 @@
 {
-  "name": "zcode-dynamic-workflow-local",
-  "description": "Local marketplace for the ZCode Dynamic Workflow MVP",
-  "pluginRoot": "plugins",
+  "name": "ultracode-for-zcode",
+  "description": "Marketplace for the ZCode Dynamic Workflow MVP plugin",
   "plugins": [
     {
       "name": "zcode-dynamic-workflow",
-      "source": "./zcode-dynamic-workflow",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/zh2209645/ultracode-for-zcode.git",
+        "path": "plugins/zcode-dynamic-workflow",
+        "ref": "main"
+      },
       "description": "Main-agent-planned dynamic delegation to fast, standard, and deep ZCode subagents",
       "version": "0.1.0",
       "category": "developer-tools",
@@ -14,8 +18,7 @@
         "delegation",
         "subagents",
         "zcode"
-      ],
-      "strict": true
+      ]
     }
   ]
 }
