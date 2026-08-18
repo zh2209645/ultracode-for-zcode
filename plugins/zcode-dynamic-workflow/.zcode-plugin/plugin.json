@@ -1,0 +1,19 @@
+{
+  "name": "zcode-dynamic-workflow",
+  "version": "0.1.0",
+  "description": "Lightweight dynamic delegation policy for ZCode primary agents",
+  "author": {
+    "name": "Local adaptation project"
+  },
+  "license": "MIT",
+  "keywords": [
+    "zcode",
+    "dynamic-workflow",
+    "delegation",
+    "subagents",
+    "model-routing"
+  ],
+  "skills": "skills",
+  "commands": "commands",
+  "agents": "agents"
+}

@@ -1,0 +1,21 @@
+{
+  "name": "zcode-dynamic-workflow-local",
+  "description": "Local marketplace for the ZCode Dynamic Workflow MVP",
+  "pluginRoot": "plugins",
+  "plugins": [
+    {
+      "name": "zcode-dynamic-workflow",
+      "source": "./zcode-dynamic-workflow",
+      "description": "Main-agent-planned dynamic delegation to fast, standard, and deep ZCode subagents",
+      "version": "0.1.0",
+      "category": "developer-tools",
+      "tags": [
+        "workflow",
+        "delegation",
+        "subagents",
+        "zcode"
+      ],
+      "strict": true
+    }
+  ]
+}
