@@ -41,14 +41,15 @@
 
 ### 3.1 `marketplace.json`
 
-目标：允许 ZCode 从本地目录加载插件。
+目标：允许 ZCode 从 GitHub marketplace 仓库的插件子目录加载固定版本。
 
 检查：
 
-- `pluginRoot` 指向 `plugins`；
-- 插件 source 指向 `./zcode-dynamic-workflow`；
+- source 使用 `git-subdir` 对象；
+- `url` 指向发布仓库，`path` 指向 `plugins/zcode-dynamic-workflow`；
+- `ref` 固定到对应的受保护或签名 release tag；
 - marketplace 与 plugin 的版本一致；
-- 版本变更时同步更新。
+- 版本变更时同步更新 marketplace、plugin、Skill metadata 和 tag。
 
 ### 3.2 `.zcode-plugin/plugin.json`
 
@@ -78,7 +79,7 @@
 1. `name` 与目录一致；
 2. `description` 明确写出触发条件；
 3. 不依赖 magic keyword hook；
-4. 包含直接执行、Explore、三档 worker 的选择规则；
+4. 包含直接执行、Explore、只读 reviewer 和三个可写 worker 的选择规则；
 5. 包含五维难度评分；
 6. 包含波次、并发上限和写冲突规则；
 7. 包含 prompt/return 契约；
@@ -97,7 +98,7 @@
 - 假设每个请求都必须并行；
 - 强制使用 deep。
 
-### 3.5 三个 Agent 文件
+### 3.5 三个写 Agent 与一个只读 reviewer
 
 共同要求：
 
@@ -116,27 +117,29 @@
 | Agent | 推荐 maxTurns | 重点 |
 |---|---:|---|
 | worker-fast | 8–12 | 快速、机械、低风险 |
-| worker-standard | 16–24 | 常规实现和验证 |
-| worker-deep | 24–40 | 复杂推理、架构、高风险、复核 |
+| worker-standard | 16–24 | 常规实现 |
+| worker-deep | 24–40 | 复杂写入、架构、高风险修复 |
+| worker-review | 20–36 | 高性能模型驱动的高风险只读复核、独立裁决、验收证据；不用于一般探索或普通分析 |
 
 ## 4. 模型映射步骤
 
 1. 打开 ZCode 模型设置或读取本机已连接模型配置；
 2. 记录真实 model id，而不是只记录 UI 显示名；
-3. 选择 fast、standard、deep；
+3. 选择 fast、standard、deep、review；
 4. 检查各模型支持的 thought levels；
 5. 替换 Agent 文件占位符；
 6. 新开 ZCode session，使配置生效；
-7. 分别显式调用三个 Agent 做最小任务；
+7. 分别显式调用四个 Agent 做最小任务；
 8. 记录是否成功调用、耗时和输出质量。
 
 若只有一个模型：
 
-1. 三个 Agent 使用同一 model id；
+1. 四个 Agent 使用同一 model id；
 2. fast 使用最低有效 thoughtLevel；
 3. standard 使用日常高质量档；
 4. deep 使用最高档；
-5. 若模型不支持多 thought levels，则 fast/standard/deep 可以暂时通过 maxTurns 和 prompt 约束区分，但应在文档中标明这不是完整性能隔离。
+5. review 使用最高档并通过只读工具白名单实现权限隔离；
+6. 若模型不支持多 thought levels，则 fast/standard/deep 可以暂时通过 maxTurns 和 prompt 约束区分，但应在文档中标明这不是完整性能隔离。
 
 ## 5. 静态验证
 
@@ -160,7 +163,7 @@
 3. Create → Add marketplace；
 4. 选择本包根目录或 `marketplace.json`；
 5. 安装并启用插件；
-6. 检查插件详情中的 Skill、Command 和 3 个 Subagent；
+6. 检查插件详情中的 Skill、Command、三个写 worker 和一个只读 reviewer；
 7. 新开 session；
 8. 使用 `/ultracode` 执行测试任务。
 
@@ -182,7 +185,7 @@
 ```text
 chore: add minimal zcode plugin marketplace
 feat: add dynamic workflow delegation skill
-feat: add fast standard and deep workers
+feat: add fast standard deep and read-only review workers
 feat: add ultracode command
 docs: add model mapping and usage guide
 test: record delegation acceptance scenarios
@@ -207,6 +210,7 @@ chore: add upstream attribution and license
 - Fast model:
 - Standard model:
 - Deep model:
+- Review model:
 
 ## Files
 - Added:

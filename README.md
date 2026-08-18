@@ -10,7 +10,8 @@
 - ZCode 内置 `Explore` 做只读探索；
 - `worker-fast` 完成简单、低风险任务；
 - `worker-standard` 完成常规实现；
-- `worker-deep` 完成复杂推理、高风险改动或独立复核。
+- `worker-deep` 完成明确需要写文件的复杂或高风险改动；
+- `worker-review` 使用高性能模型和只读工具完成高风险独立复核、裁决和验收证据检查；一般探索与普通分析不使用它。
 
 插件不替主 Agent 做规划，也不实现 Team runtime、任务队列、心跳、状态机、Ralph 循环或 HUD。
 
@@ -29,6 +30,8 @@
 
 ```text
 zcode-dynamic-workflow-mvp-kit/
+├── .gitattributes
+├── .gitignore
 ├── README.md
 ├── AGENTS.md
 ├── NOTICE.md
@@ -54,7 +57,8 @@ zcode-dynamic-workflow-mvp-kit/
 │       ├── agents/
 │       │   ├── worker-fast.md
 │       │   ├── worker-standard.md
-│       │   └── worker-deep.md
+│       │   ├── worker-deep.md
+│       │   └── worker-review.md
 │       ├── README.md
 │       ├── MODEL-MAPPING.md
 │       └── LICENSE
@@ -89,7 +93,8 @@ zcode-dynamic-workflow-mvp-kit/
 - 1 个 ZCode 插件 manifest；
 - 1 个动态委派 Skill；
 - 1 个显式 `/ultracode` 命令；
-- 3 个不同性能层级的通用 worker；
+- 3 个不同性能层级的可写 worker；
+- 1 个高性能只读 reviewer；
 - 0 个 Hook；
 - 0 个 MCP；
 - 0 个 Node/TypeScript runtime；
@@ -97,11 +102,12 @@ zcode-dynamic-workflow-mvp-kit/
 
 ## 6. 模型映射（已完成）
 
-三个 worker 已配置为本机真实模型 ID（完成日期 2026-08-18）：
+三个写 worker 和一个只读 reviewer 已配置为本机真实模型 ID（更新日期 2026-08-19）：
 
 - `worker-fast` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: low`
 - `worker-standard` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: high`
 - `worker-deep` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: max`
+- `worker-review` → `builtin:zai-coding-plan/GLM-5.3`，`thoughtLevel: max`
 
 本机唯一激活的 provider 是 `builtin:zai-coding-plan`，其 `GLM-5.3` 同时支持
 `low`/`high`/`max` 三档思考等级，因此采用“同一模型 + 三档思考等级”的分层方式。

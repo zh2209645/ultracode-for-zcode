@@ -8,8 +8,9 @@
 2. 判断哪些工作应直接完成、哪些应委派；
 3. 按难度选择 `worker-fast`、`worker-standard` 或 `worker-deep`；
 4. 使用 ZCode 内置 `Explore` 进行只读代码库探索；
-5. 将独立任务并行，将有依赖任务按波次执行；
-6. 汇总结果、在必要时升级任务层级，并执行最低限度验证。
+5. 使用高性能模型驱动的只读 `worker-review` 进行高风险独立复核、裁决和验收证据检查，一般探索与普通分析不使用该 Agent；
+6. 将独立任务并行，将有依赖任务按波次执行；
+7. 汇总结果、在必要时升级任务层级，并执行最低限度验证。
 
 ## 必读文件
 
@@ -34,6 +35,7 @@
 - `agents/worker-fast.md`
 - `agents/worker-standard.md`
 - `agents/worker-deep.md`
+- `agents/worker-review.md`
 - 必要的说明文档和本地 marketplace manifest
 
 禁止加入：
@@ -63,8 +65,8 @@
 ## 实施策略
 
 1. 先检查当前骨架是否能被 ZCode 识别。
-2. 找到本机真实模型 ID，替换三个占位值。
-3. 保持一个 Skill、三个 worker 的最小结构。
+2. 找到本机真实模型 ID，配置四个 Agent。
+3. 保持一个 Skill、三个可写 worker 和一个只读 reviewer 的最小结构。
 4. 通过 Agent 的 `description` 提高自动选择准确率。
 5. 让 Skill 定义动态拆解和路由规则，而不是写死固定流水线。
 6. 用场景测试验证委派行为，而不是只检查文件能加载。

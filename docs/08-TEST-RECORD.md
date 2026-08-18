@@ -14,21 +14,23 @@
 | ID | 结果 | 证据 |
 |---|---|---|
 | S-01 | PASS | `marketplace.json` JSON 解析通过；插件 source 为 `git-subdir` 对象形式（`url` + `path: plugins/zcode-dynamic-workflow`），与本机已验证可用的 claude-plugins-official 条目及 zcode 安装代码分支一致（相对路径字符串形式在 GitHub marketplace 安装时报 Unsupported source，已修复） |
-| S-02 | PASS | `plugin.json` name 符合 `^[a-z0-9][a-z0-9._-]{0,127}$`；skills/commands/agents 三个组件目录存在；marketplace、plugin 与 Skill metadata 版本一致（0.1.2） |
-| S-03 | PASS | 结构合规 + 在应用内确认（2026-08-19：插件安装启用后随会话加载，`/ultracode` 正常触发并挂载 skill） |
-| S-04 | PASS | `commands/ultracode.md` 含 description、`$ARGUMENTS`、`skills: dynamic-workflow`，文件名符合 `^[a-z0-9][a-z0-9_:-]{0,63}$`；在应用内 `/ultracode` 可用（用户确认） |
-| S-05 | PASS | 三个 agent 文件 frontmatter 完整：name/description/model/maxTurns/injectAgentsMd/tools；`injectAgentsMd: false` 与穷举工具白名单静态验证通过。应用内派发证据来自 0.1.0；0.1.2 新会话复验待发布 tag 后执行 |
-| S-06 | PASS | 插件包内无未解析模型占位前缀；model ID 存在于本机激活 provider `builtin:zai-coding-plan`，三个 thoughtLevel 均在其 `GLM-5.3` 支持列表内 |
+| S-02 | PASS | `plugin.json` name 符合 `^[a-z0-9][a-z0-9._-]{0,127}$`；skills/commands/agents 三个组件目录存在；marketplace、plugin 与 Skill metadata 版本一致（0.1.3） |
+| S-03 | PARTIAL | Skill 结构静态合规；0.1.0 在应用内确认插件启用后随会话加载并挂载 skill，但 0.1.3 尚需发布 tag、刷新 marketplace 并在新会话复验 |
+| S-04 | PARTIAL | `commands/ultracode.md` 的 description、`$ARGUMENTS`、`skills: dynamic-workflow` 与文件名静态合规；`/ultracode` 仅有 0.1.0 历史可用证据，0.1.3 尚需新会话复验 |
+| S-05 | PARTIAL | 四个 agent 文件的 frontmatter、`injectAgentsMd: false` 与穷举工具白名单静态验证通过；前三个写 worker 有历史派发证据，但 worker-review 尚需在 0.1.3 新会话确认被 ZCode 发现 |
+| S-06 | PARTIAL | 插件包内无未解析模型占位前缀；model ID 与四个 thoughtLevel 均受本机 provider 配置支持，但 worker-review 尚未在 0.1.3 新会话实际调用 |
 | S-07 | PASS | frontmatter 键全部为文档认可字段，`thoughtLevel` 拼写正确（camelCase） |
 | S-08 | PASS | manifest 无 hooks/mcpServers/dependencies 键；插件目录无 hooks/、无 .mcp.json、无运行时代码、无状态文件 |
 | S-09 | PASS | 项目 LICENSE、上游 `references/omc/LICENSE`、NOTICE.md 致谢均存在 |
-| S-10 | PARTIAL | 0.1.0 安装启用后新会话正确加载（2026-08-19 确认）；0.1.2 必须在发布 `v0.1.2` tag 后刷新 marketplace 并新开 session 复验 |
-| S-11 | PASS | 30 项权限静态检查通过：三个 worker 均关闭 AGENTS.md 注入；仅有 Read/Edit/Write/Glob/Grep；无 Bash/Web/MCP；只有写文件任务可读写工作区 `.zcode/**` 当前任务 todo/log，探索/分析/验证任务不访问 `.zcode`，用户级 `~/.zcode` 等明确禁止 |
-| S-12 | PARTIAL | marketplace/plugin/Skill 版本均为 0.1.2，source 已固定 `v0.1.2`；远端 tag 尚待发布，因此远端可安装性未验证 |
+| S-10 | PARTIAL | 0.1.0 安装启用后新会话正确加载（2026-08-19 确认）；0.1.3 必须在发布 `v0.1.3` tag 后刷新 marketplace 并新开 session 复验 |
+| S-11 | PASS | 32 项 0.1.3 配置/权限检查通过：三个写 worker 仅有 Read/Edit/Write/Glob/Grep；worker-review 精确为 Read/Glob/Grep；四者均关闭 AGENTS.md 注入且无 Bash/Web/MCP；review 不具备任何写工具 |
+| S-12 | PARTIAL | marketplace/plugin/Skill 版本均为 0.1.3，source 已固定 `v0.1.3`；远端 tag 尚待发布，因此远端可安装性未验证 |
 
 静态检查由一次性脚本执行（未入库，符合 docs/04 §5 要求）。
 
-## 2. 功能场景（docs/05 §2）
+## 2. 功能场景（docs/05 §2，0.1.0 历史证据）
+
+本节记录初始版本的历史执行轨迹，其中 deep 承担只读分析/复核的旧路由已被 §10 的 0.1.3 reviewer 路由取代；这些记录不证明 worker-review 已在 0.1.3 新会话加载或通过 F-14。
 
 ### F-01 不应委派 — PASS
 
@@ -285,7 +287,29 @@
 - 覆盖：三处版本、固定 ref、三个 agent 的注入开关/精确工具表/无 Shell-Web-MCP、`.zcode` 写任务门禁、只读任务通过 ZCode 返回、用户级 `.zcode` 禁止、3/10 双层并发、Confirm Before Changes、Full Access 禁止、无 Hook/MCP/runtime/executable、无模型占位前缀。
 - JSON 解析与 `git diff --check`：PASS。
 
-### 未完成的外部验证
+### 未完成的外部验证（0.1.2 历史状态）
 
-- `v0.1.2` tag 尚未发布，因此 S-10（0.1.2 新会话加载）与 S-12（远端 tag 可安装性）保持 PARTIAL。
+- 0.1.2 当时的状态：`v0.1.2` tag 尚未发布，因此 S-10（0.1.2 新会话加载）与 S-12（远端 tag 可安装性）保持 PARTIAL；当前 0.1.3 门禁见 §10 和最终报告。
 - 发布后需：刷新 marketplace → 更新插件 → 新开 session → 分别派发一个写任务和一个验证任务，确认前者可更新工作区 `.zcode` todo/log，后者只通过 subagent 结果返回且不写 `.zcode`。
+
+## 10. 只读 reviewer 隔离（2026-08-19，0.1.3）
+
+ZCode 官方文档确认内置 subagent 只有 `general-purpose` 和只读 `Explore`，没有专用 reviewer；自定义 Agent 可使用穷举 `tools` 白名单建立工具级只读隔离。因此新增 `worker-review.md`：
+
+- model：`builtin:zai-coding-plan/GLM-5.3`；thoughtLevel：max；maxTurns：30；
+- tools：`Read, Glob, Grep`；
+- `injectAgentsMd: false`；
+- 无 Edit、Write、Bash、WebFetch、WebSearch 或 MCP；
+- 不访问工作区 `.zcode/**` 或用户级 `~/.zcode`；只通过 ZCode subagent result 返回 verdict 与证据。
+
+路由同步调整：Explore 负责广泛搜索、例行调查和证据收集，普通分析由主 Agent完成；worker-review 使用高性能模型和最高推理档位，只负责高风险代码/安全/权限/兼容性复核、独立裁决和验收证据结论；fast/standard/deep 只承担明确写文件的任务。高风险变更由 Explore 收集上下文、reviewer 给出独立风险结论、deep 写入、主 Agent运行测试、reviewer 再复核。
+
+静态检查：32/32 PASS，覆盖版本/ref、四个 Agent 数量、三个 writer 工具面、reviewer 精确只读工具面、AGENTS.md 注入关闭、`.zcode` 禁止、ZCode result 返回、review 路由、deep 写路由、3/10 并发、无 Hook/MCP/runtime/占位符以及 F-14 静态配置部分/最终报告同步。
+
+### 待实跑
+
+- 根据 docs/05 §5，在 0.1.3 新 session 中重跑 F-01/F-02/F-05/F-07/F-09/F-13/F-14；F-05/F-09 的 0.1.0 deep 只读分析历史证据不能替代当前 reviewer 路由。
+- F-14：在 0.1.3 新 session 中确认 worker-review 被正确自动/显式选择，且工具面只有 Read/Glob/Grep。
+- 对 reviewer 提交诱导写入 `.zcode`、普通文件和用户级 `~/.zcode` 的内容，确认不存在 Edit/Write 工具调用；`.zcode` 不发生变化。
+- 对 writer 和 reviewer 分别构造 symlink、junction 或 reparse-point 路径，确认主 Agent按规范化真实目标识别并拒绝越出可信工作区/SCOPE 的读写访问。
+- 在 canonical 检查与访问之间并发替换路径，确认每次访问前重新解析；宿主无法原子绑定真实目标时任务 blocked，不发生 TOCTOU 越界读写。

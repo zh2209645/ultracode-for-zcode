@@ -52,6 +52,7 @@
 | LOW tier | `worker-fast` |
 | MEDIUM tier | `worker-standard` |
 | HIGH tier | `worker-deep` |
+| code/security reviewer | `worker-review`（只读） |
 | explore agent | ZCode 内置 Explore |
 | orchestrator | ZCode 主 Agent |
 | Task graph / waves | 主 Agent临时上下文中的动态计划 |

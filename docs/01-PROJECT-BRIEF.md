@@ -43,7 +43,7 @@ ZCode 已经原生支持：
 
 ### 用户故事 3：复杂任务
 
-作为用户，我提交跨模块重构时，主 Agent应先完成必要探索，建立任务依赖，再将复杂分析或关键修改交给 deep worker。
+作为用户，我提交跨模块重构时，主 Agent应先用 Explore 完成必要探索并建立任务依赖；普通分析由主 Agent完成，需要高价值独立风险结论时使用只读 worker-review，只有明确的复杂文件修改才交给 deep worker。
 
 ### 用户故事 4：成本控制
 
@@ -81,4 +81,4 @@ ZCode 已经原生支持：
 
 ## Definition of Done
 
-详见 `05-ACCEPTANCE-TESTS.md`。核心完成条件是：插件可加载、模型映射真实可用、主 Agent能够正确选择直接/Explore/fast/standard/deep，且没有引入额外 runtime。
+详见 `05-ACCEPTANCE-TESTS.md`。核心完成条件是：插件可加载、四个 Agent 的模型映射真实可用、主 Agent能够正确选择直接/Explore/review/fast/standard/deep，且没有引入额外 runtime。

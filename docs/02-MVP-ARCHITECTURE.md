@@ -15,6 +15,7 @@ ZCode Primary Agent
     |
     +-- Direct work
     +-- Built-in Explore
+    +-- worker-review
     +-- worker-fast
     +-- worker-standard
     +-- worker-deep
@@ -76,13 +77,23 @@ Skill 不执行代码，也不维护状态。
 
 适合：
 
-- 架构设计；
+- 明确需要写文件的架构实现；
 - 跨模块重构；
-- 高风险安全、权限、数据和兼容性问题；
-- 根因不明的复杂故障；
-- 对重要实现进行独立复核。
+- 高风险安全、权限、数据和兼容性修复；
+- 根因已由 Explore 或主 Agent确认、范围明确且需要修改文件的复杂故障。
 
-### 2.6 内置 Explore
+### 2.6 worker-review
+
+高性能模型驱动的只读独立 reviewer，仅有 `Read`、`Glob`、`Grep`，用于：
+
+- 代码与安全复核；
+- 权限、兼容性和架构风险复核；
+- 验收证据检查；
+- 重要实现的独立裁决。
+
+它不读取或写入 `.zcode`，只通过 ZCode subagent result 返回结论。它不适合一般代码库探索、例行调查、证据收集或普通分析；这些任务交给 Explore 或主 Agent。
+
+### 2.7 内置 Explore
 
 不重复实现 Explore Agent。使用 ZCode 内置只读角色完成：
 
@@ -131,7 +142,7 @@ Cross-session resume: none
 External database: none
 ```
 
-动态任务图只存在于当前主 Agent上下文。只有文件写入任务的 worker 可以更新工作区 `.zcode/**` 中由 ZCode 使用的 todo/任务日志；探索、分析和验证类 subagent 通过 ZCode 本身返回结果，不访问 `.zcode`。插件不建立自己的恢复状态或任务数据库。这样可以降低实现和维护成本，并最大程度利用 ZCode 的原生长任务能力。
+动态任务图只存在于当前主 Agent上下文。只有文件写入任务的 worker 可以更新工作区 `.zcode/**` 中由 ZCode 使用的 todo/任务日志；Explore 和 worker-review 通过 ZCode 本身返回结果，不访问 `.zcode`，普通分析由主 Agent完成。插件不建立自己的恢复状态或任务数据库。这样可以降低实现和维护成本，并最大程度利用 ZCode 的原生长任务能力。
 
 ## 5. 并发模型
 
@@ -140,7 +151,7 @@ ZCode 可让多个前台 Subagent 并行，主任务等待它们全部返回；�
 - 需要结果才能继续：前台；
 - 长时间且不阻塞当前路径：后台；
 - 可写 worker 并发上限：3；
-- 仅只读 Explore 可将 subagent 总并发提高到 10；
+- 仅只读 Explore 或 worker-review 可将 subagent 总并发提高到 10；
 - 写同一文件：默认不并行；
 - 不确定是否独立：先串行或先 Explore。
 
@@ -152,6 +163,7 @@ ZCode 可让多个前台 Subagent 并行，主任务等待它们全部返回；�
 worker-fast     -> fast/cheap model, low thinking
 worker-standard -> balanced coding model, high thinking
 worker-deep     -> strongest model, max or highest thinking
+worker-review   -> strongest model, max or highest thinking, read-only
 ```
 
 ### 推荐方案 B：单模型三档
@@ -160,6 +172,7 @@ worker-deep     -> strongest model, max or highest thinking
 worker-fast     -> same model, low
 worker-standard -> same model, high
 worker-deep     -> same model, max
+worker-review   -> same model, max, read-only
 ```
 
 具体模型 ID 必须来自本机 ZCode 模型列表，不应在通用 Skill 中硬编码。

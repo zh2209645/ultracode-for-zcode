@@ -6,7 +6,7 @@
 
 > **由主 Agent 动态规划工作，并根据每个子任务的难度、风险和独立性，选择不同性能层级的 ZCode subagent。**
 
-ZCode 已经原生提供主 Agent、隔离 subagent、并行前台执行、后台执行、Skill、Command 和插件打包能力。首版因此不需要另建任务服务器、队列、Hook 状态机或 MCP 编排器。插件只需向主 Agent提供一套清晰的委派政策，并注册三个可被选择的通用 worker。
+ZCode 已经原生提供主 Agent、隔离 subagent、并行前台执行、后台执行、Skill、Command 和插件打包能力。首版因此不需要另建任务服务器、队列、Hook 状态机或 MCP 编排器。插件只需向主 Agent提供一套清晰的委派政策，并注册三个可写 worker 和一个只读 reviewer。
 
 ---
 
@@ -40,7 +40,7 @@ ZCode 已经原生提供主 Agent、隔离 subagent、并行前台执行、后�
   ↓
 为每个任务评估难度
   ↓
-直接完成 / Explore / worker-fast / worker-standard / worker-deep
+直接完成 / Explore / worker-review / worker-fast / worker-standard / worker-deep
   ↓
 汇总结果
   ↓
@@ -54,7 +54,8 @@ ZCode 已经原生提供主 Agent、隔离 subagent、并行前台执行、后�
 - 简单任务不委派；
 - 只读搜索优先使用内置 Explore；
 - 常规任务优先使用 standard；
-- 复杂、高风险任务使用 deep；
+- 明确需要文件修改的复杂任务使用 deep；
+- 高风险独立复核和裁决使用只读 reviewer；
 - 多个独立任务可并行；
 - 有依赖任务按波次执行；
 - subagent 不掌握总任务规划；
@@ -76,7 +77,8 @@ zcode-dynamic-workflow/
 └── agents/
     ├── worker-fast.md
     ├── worker-standard.md
-    └── worker-deep.md
+    ├── worker-deep.md
+    └── worker-review.md
 ```
 
 ### 2.2 明确不实现
@@ -114,15 +116,16 @@ zcode-dynamic-workflow/
 
 ### 3.2 工作面
 
-首版只有四种工作路径：
+首版只有六种工作路径：
 
 | 路径 | 用途 |
 |---|---|
 | 主 Agent 直接处理 | 极小、清晰、低风险任务 |
 | 内置 Explore | 只读搜索、调用链、文件定位、证据收集 |
+| worker-review | 高性能模型驱动的只读高风险复核、独立裁决和验收证据检查；不用于一般探索或普通分析 |
 | worker-fast | 简单、机械、低耦合、低风险任务 |
 | worker-standard | 常规实现、测试、文档和中等复杂修改 |
-| worker-deep | 架构、复杂重构、根因分析、高风险改动、独立复核 |
+| worker-deep | 明确需要写文件的架构、复杂重构、根因修复和高风险改动 |
 
 ### 3.3 无持久状态
 
@@ -144,7 +147,7 @@ zcode-dynamic-workflow/
 | 风险 | 文档/非行为 | 普通业务行为 | 安全、数据、权限、兼容性、生产配置 |
 | 验证成本 | 单个检查 | 若干测试 | 多层测试、人工验证或回归面大 |
 
-总分与默认路由：
+明确需要文件修改的子任务才使用以下总分与默认写任务路由；探索、普通分析和独立复核先按任务类型分别交给 Explore、主 Agent或 worker-review：
 
 | 总分 | 默认执行者 |
 |---|---|
@@ -158,8 +161,9 @@ zcode-dynamic-workflow/
 以下规则优先于总分：
 
 - 只读代码库搜索：内置 Explore；
-- 安全、认证、授权、数据迁移、公开 API 兼容性：至少 deep 分析或 deep 复核；
-- 架构决策、跨模块重构、连续失败后的根因分析：deep；
+- 一般探索、例行调查和证据收集：Explore；不需要独立复核结论的普通分析：主 Agent；
+- 安全、认证、授权、数据迁移、公开 API 兼容性和架构风险的高价值独立复核或裁决：worker-review；明确写入：deep；
+- 连续失败后的独立裁决：worker-review；根因探索：Explore；跨模块写入或复杂修复：deep；
 - 纯机械批量替换、格式修复、简单文档更新：fast；
 - 一般功能实现、测试补充、常规 bug 修复：standard；
 - worker 不能再派生 Agent；
@@ -168,7 +172,7 @@ zcode-dynamic-workflow/
 ### 4.3 并行规则
 
 - 只有不存在写冲突、输出依赖或共享状态依赖的任务才能并行；
-- 同时最多运行 3 个可写 worker；仅只读 Explore 可将 subagent 总并发提高到 10；
+- 同时最多运行 3 个可写 worker；仅只读 Explore 或 worker-review 可将 subagent 总并发提高到 10；
 - 同一文件的多个写任务默认串行；
 - 先探索再实现时，探索是 Wave 1，实现是 Wave 2；
 - 实现依赖接口决策时，接口决策先完成；
@@ -178,8 +182,8 @@ zcode-dynamic-workflow/
 
 ### 4.4 升级和停止
 
-- fast 失败或发现范围扩大：升级到 standard；
-- standard 失败、出现架构/高风险问题：升级到 deep；
+- fast 失败或发现范围扩大：需要继续写入时升级到 standard；
+- standard 失败或出现架构/高风险问题：先由主 Agent重审范围；需要独立风险裁决时使用 worker-review，只有明确需要高复杂度文件修改时才升级到 deep；
 - deep 失败：主 Agent重新审视任务边界、前置条件或用户约束；
 - 同一子任务最多自动升级一次；
 - 不做无限重试；
@@ -199,11 +203,12 @@ zcode-dynamic-workflow/
 
 ### 5.2 单模型环境
 
-可以把同一个模型 ID 配置给三个 worker，并使用不同思考等级：
+可以把同一个模型 ID 配置给三个写 worker 和一个只读 reviewer，并使用不同思考等级：
 
 - fast：`low`
 - standard：`high`
 - deep：`max` 或该模型支持的最高等级
+- review：`max` 或该模型支持的最高等级
 
 注意：ZCode 只有在 Agent 指定了具体模型 ID 时才应用独立 `thoughtLevel`；`model: inherit` 会跟随主 Agent，单独配置的 thought level 不生效。
 
@@ -235,7 +240,7 @@ OMC 当前包含大量 skills、agents、MCP、CLI bridge、Team runtime、状�
 1. 在目标仓库创建独立分支。
 2. 记录当前 ZCode 版本。
 3. 确认插件、Skill 和 custom subagent 功能可用。
-4. 记录三个真实模型 ID。
+4. 记录三个写 worker 和一个只读 reviewer 的真实模型映射。
 5. 保存一次未安装插件时的基线行为。
 
 ### 阶段 1：建立最小插件
@@ -256,7 +261,7 @@ OMC 当前包含大量 skills、agents、MCP、CLI bridge、Team runtime、状�
 6. 写入升级和停止条件；
 7. 保持 Skill 简洁，避免复制完整 OMC harness。
 
-### 阶段 3：实现三个 worker
+### 阶段 3：实现三个写 worker 和一个只读 reviewer
 
 每个 worker 只需要：
 
@@ -297,7 +302,7 @@ OMC 当前包含大量 skills、agents、MCP、CLI bridge、Team runtime、状�
 6. 三个独立任务：并行；
 7. 有依赖任务：分波次；
 8. fast 失败：升级 standard；
-9. 高风险认证修改：deep 分析或复核；
+9. 高风险认证修改：Explore 收集上下文，worker-review 给出独立风险结论，deep 只负责明确写入；
 10. worker 返回不完整：主 Agent补充验证。
 
 ### 阶段 7：收敛
@@ -315,9 +320,9 @@ OMC 当前包含大量 skills、agents、MCP、CLI bridge、Team runtime、状�
 首版只有在以下条件全部满足时才完成：
 
 - 插件可从本地 marketplace 安装；
-- Skill、Command、三个 Agent 均被 ZCode 识别；
-- 三个 Agent 使用真实模型 ID；
-- 路由测试表明主 Agent能区分直接、fast、standard、deep；
+- Skill、Command、四个 Agent 均被 ZCode 识别；
+- 四个 Agent 使用真实模型 ID；
+- 路由测试表明主 Agent能区分直接、Explore、review、fast、standard、deep；
 - 独立任务能并行，有依赖任务不会错误并行；
 - subagent 不会再派生 subagent；
 - 最终输出包含验证证据；

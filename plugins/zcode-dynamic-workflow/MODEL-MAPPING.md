@@ -1,7 +1,7 @@
 # Model Mapping
 
-Status: **configured for this machine** (2026-08-18). The three Agent files use real
-model IDs and are ready to install.
+Status: **configured locally for this machine** (2026-08-19). The four Agent files use real
+model IDs. Remote installation remains pending until the corresponding `v0.1.3` release tag is published.
 
 ## Active mapping (Option B — one model, three effort levels)
 
@@ -10,6 +10,7 @@ model IDs and are ready to install.
 | worker-fast | `builtin:zai-coding-plan/GLM-5.3` | `low` | 12 |
 | worker-standard | `builtin:zai-coding-plan/GLM-5.3` | `high` | 24 |
 | worker-deep | `builtin:zai-coding-plan/GLM-5.3` | `max` | 36 |
+| worker-review | `builtin:zai-coding-plan/GLM-5.3` | `max` | 30 |
 
 The active provider on this machine is `builtin:zai-coding-plan` (Z.ai Coding Plan,
 the only provider marked `available` in the local coding-plan cache). `GLM-5.3`
@@ -38,7 +39,7 @@ mapping that is fully evidenced.
 ### Changing the mapping on another machine
 
 1. Open ZCode model settings and copy the real model IDs (not display names).
-2. Edit `agents/worker-*.md` frontmatter: `model` and a supported `thoughtLevel`.
+2. Edit all `agents/worker-*.md` frontmatter: `model` and a supported `thoughtLevel`.
 3. Remember: a subagent `thoughtLevel` only takes effect when `model` names a
    specific model; `model: inherit` follows the primary Agent and ignores it.
 4. Start a new ZCode session so the changes load.
