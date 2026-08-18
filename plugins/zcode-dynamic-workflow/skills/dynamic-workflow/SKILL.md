@@ -4,7 +4,7 @@ description: Use for substantive coding, refactoring, investigation, review, mig
 when_to_use: Use when work may benefit from isolated context, parallel subagents, model-tier routing, or dependency-aware execution. Do not use for a trivial single-step request that the primary Agent can complete faster and safely.
 license: MIT
 metadata:
-  version: 0.1.3
+  version: 0.1.4
 ---
 
 # Dynamic Workflow

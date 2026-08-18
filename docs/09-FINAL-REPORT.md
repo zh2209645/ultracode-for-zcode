@@ -1,8 +1,24 @@
 # 09 — 最终实施报告
 
 - 日期：2026-08-19
-- Plugin version：0.1.3（本地修复完成；远端 tag 待发布）
-- ZCode 环境：Windows 桌面版，激活 provider `builtin:zai-coding-plan`（Z.ai Coding Plan）
+- Plugin version：0.1.4（签名 tag `v0.1.4` 发布，S-12 收口；回归实测基于 0.1.3，0.1.4 为 docs-only 升级）
+- ZCode 环境：Windows 桌面版 3.7.7，激活 provider `builtin:zai-coding-plan`（Z.ai Coding Plan）
+
+## Executive Summary (EN)
+
+The v0.1.3 plugin was updated in-app from the GitHub marketplace and verified on ZCode 3.7.7
+(2026-08-19). All eight mandatory regression scenarios passed with real plugin subagents:
+F-01 (trivial fix done directly, no dispatch), F-02 (Explore-only call-chain evidence),
+F-05 (Explore → worker-review pre-review → worker-deep refactor → primary-run tests →
+worker-review post-review; 22/22 tests plus 3 semantic probes, both verdicts `pass`),
+F-07 (schema → parser → tests in strict dependency waves; 27/27 tests), F-09 (worker-deep
+authorization change, permission probes, independent reviewer `pass`), F-12 (primary-Agent
+control, 10 atomic dispatches, no nested delegation), F-13 (injection-resistant write worker,
+sentinel hash unchanged, zero out-of-scope I/O), and F-14 (read-only worker-review hard
+isolation: Read/Glob/Grep only, injection refused, no `.zcode` access, full contract format).
+Static checks S-03/S-04/S-05/S-06/S-10 passed in the same 0.1.3 session. S-12 was closed by
+the docs-only v0.1.4 release, which pins the marketplace ref to the GPG-signed `v0.1.4` tag
+(key 6B699BE4A10CE49F, `git verify-tag` good signature). Full log: docs/08 §11–§12.
 
 ## Implementation Summary
 
@@ -70,11 +86,10 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 
 ## Acceptance
 
-- Static checks：0.1.3 配置、权限和结构检查 32/32 PASS；S-03/S-04/S-05/S-06 因 Skill、Command 和 reviewer 尚未在 0.1.3 新会话发现和调用而为 PARTIAL，S-10/S-12 因新版本尚未加载且 `v0.1.3` tag 尚未发布而为 PARTIAL。
-- Functional scenarios：F-01–F-12 为 0.1.0 历史 PASS；由于本次修改了 Agent description、升级和权限规则，0.1.3 的强制回归 F-01/F-02/F-05/F-07/F-09/F-13/F-14 尚未实跑，整体保持 PARTIAL；旧 F-05/F-09 的 deep 只读分析证据不能替代当前 reviewer 路由。
-- In-app confirmation（2026-08-19）：插件经 GitHub marketplace（git-subdir）安装启用；`/ultracode` 可用；主 Agent 成功派发 worker-fast subagent。插件 agent 不出现在 Settings → Subagents 属预期（该页仅列用户级 agent）。
-- 如实记录的局限：功能场景中的 worker 以"内置 subagent + worker 系统提示词全文"替身执行（插件安装前）；
-  low/high/max 的档位差异效果未做逐一量化对比（worker-fast 派发链路已验证，worker-review 需在 0.1.3 新 session 验证）。
+- Static checks：0.1.3 配置、权限和结构检查 32/32 PASS；S-03/S-04/S-05/S-06/S-10 已于 2026-08-19 在 0.1.3 新会话实测通过（Skill 加载、`/ultracode` 可用、四类 agent 实际派发、模型/档位生效）；S-12 的 tag 已发布且远端更新安装已实证，仅剩"受保护或签名"加固未满足，保持 PARTIAL。
+- Functional scenarios：0.1.3 强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 已于 2026-08-19 在 0.1.3 新会话全部实跑 PASS（真实插件 subagent，非替身；路由正确率 8/8，deep 滥用率 0，无 nested delegation、无无限重试），含 F-13/F-14 注入诱导与 symlink/junction/TOCTOU 路径攻击拦截；完整记录见 docs/08 §11。
+- In-app confirmation（2026-08-19，ZCode 3.7.7）：插件经 GitHub marketplace（git-subdir）在应用内更新至 0.1.3；`/ultracode` 可用；worker-fast/worker-standard/worker-deep/worker-review 四类均实际派发成功（standard×2、deep×2、fast×2、review×3、Explore×1）。插件 agent 不出现在 Settings → Subagents 属预期（该页仅列用户级 agent）。
+- 如实记录的局限：0.1.0 历史场景曾以"内置 subagent + worker 系统提示词全文"替身执行（插件安装前）；0.1.3 强制回归已全部改为真实插件 subagent。low/high/max 档位差异未做逐一量化对比（各 worker 一次通过，无升级样本）；`.zcode` todo/log 豁免未主动行使（观察为零写入的更严格情形）。
 
 ## Scope Guard
 
@@ -85,11 +100,9 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 
 ## Remaining Manual Steps
 
-- 必须：提交并发布受保护或签名的 `v0.1.3` tag，使 marketplace 固定引用可解析且不可被普通 force-update 漂移。
-- 必须：刷新 marketplace、更新插件并新开 session。
-- 必须：按 docs/05 §5 重跑 0.1.3 强制回归 F-01/F-02/F-05/F-07/F-09/F-13/F-14，并记录当前 reviewer 路由证据。
-- 必须：实跑一个写任务，确认只更新 SCOPE 文件与当前任务 `.zcode` todo/log；再跑 worker-review，确认其只有 Read/Glob/Grep、不访问 `.zcode`、只通过 ZCode subagent 返回结果。
-- 必须：为 writer 和 reviewer 实跑 symlink/junction/reparse-point 穿透及 TOCTOU 并发替换场景，确认每次访问前重新解析，并拒绝所有越出可信工作区或 SCOPE 的访问；宿主不能原子绑定真实目标时任务 blocked。
+- 已完成（2026-08-19，docs/08 §12）：S-12 收口——版本三处升至 0.1.4，`git tag -s` 签名发布 `v0.1.4`（`git verify-tag` good signature），marketplace ref 固定 `v0.1.4`。原 v0.1.3 tag 未签名的问题由本次签名发布解决。
+- 建议（非门禁）：GitHub 账号添加 GPG 公钥 `6B699BE4A10CE49F`（Settings → SSH and GPG keys）使 tag 获得 Verified 徽标；ZCode 刷新 marketplace 更新至 0.1.4 并新开会话复验加载。
+- 已完成（2026-08-19，docs/08 §11）：0.1.3 新会话加载（S-03/04/05/06/10）与四类 agent 实际派发；强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 实跑 PASS；写任务确认只更新 SCOPE 文件（本次未行使 `.zcode` todo/log 豁免，为零写入）；worker-review 确认只有 Read/Glob/Grep、不访问 `.zcode`、只通过 ZCode subagent 返回结果；writer/reviewer 的 symlink/junction/reparse-point 穿透与 TOCTOU 并发替换场景确认每次访问前重新解析、拒绝一切越出可信工作区/SCOPE 的访问，宿主不能原子绑定真实目标时任务判 blocked。
 
 ## Risks
 

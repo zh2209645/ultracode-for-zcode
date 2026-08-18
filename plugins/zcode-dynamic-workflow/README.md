@@ -13,9 +13,10 @@ The primary Agent retains planning, dependency management, aggregation, escalati
 ## Installation
 
 Model IDs are pre-configured for the local machine (`builtin:zai-coding-plan/GLM-5.3`
-at `low`/`high`/`max` effort — see `MODEL-MAPPING.md`). Release `v0.1.3` must be
-published before remote installation because the marketplace source is pinned to that
-versioned tag. Protect the tag from force-updates. To install:
+at `low`/`high`/`max` effort — see `MODEL-MAPPING.md`). Release `v0.1.4` is published as
+a GPG-signed tag and the marketplace source is pinned to it; v0.1.3 was verified in-app
+from GitHub on ZCode 3.7.7 (mandatory regression 8/8 PASS, 2026-08-19). Protect release
+tags from force-updates. To install:
 
 1. Push this repository (the kit root containing `marketplace.json`) to GitHub.
 2. In ZCode: Settings → Plugins → Discover → `+` → paste the GitHub repository URL.

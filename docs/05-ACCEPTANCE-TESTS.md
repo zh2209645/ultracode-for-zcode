@@ -1,5 +1,10 @@
 # 05 — 验收测试
 
+> EN: Acceptance tests — static checks S-01..S-12 and functional scenarios F-01..F-14.
+> Mandatory gates: F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14, routing accuracy ≥ 80%,
+> deep misuse ≤ 20%, no nested delegation, no infinite retries. Current results (2026-08-19,
+> 0.1.3): mandatory regression 8/8 PASS — see docs/08 §11.
+
 ## 1. 静态加载测试
 
 | ID | 测试 | 通过条件 |

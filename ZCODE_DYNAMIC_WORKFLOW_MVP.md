@@ -6,6 +6,13 @@
 
 > **由主 Agent 动态规划工作，并根据每个子任务的难度、风险和独立性，选择不同性能层级的 ZCode subagent。**
 
+> **English abstract**: This document specifies the MVP: the primary Agent dynamically plans
+> the work and dispatches atomic subtasks to difficulty-matched ZCode subagents (direct work,
+> built-in Explore, read-only worker-review, or worker-fast/standard/deep). The primary Agent
+> remains the only orchestrator; hooks, MCP servers, extra runtimes, persistent state, and
+> nested delegation are all out of scope. Status (2026-08-19): v0.1.3 regression 8/8 PASS;
+> the docs-only v0.1.4 release closes S-12 with a signed tag — see docs/08 §11–§12.
+
 ZCode 已经原生提供主 Agent、隔离 subagent、并行前台执行、后台执行、Skill、Command 和插件打包能力。首版因此不需要另建任务服务器、队列、Hook 状态机或 MCP 编排器。插件只需向主 Agent提供一套清晰的委派政策，并注册三个可写 worker 和一个只读 reviewer。
 
 ---

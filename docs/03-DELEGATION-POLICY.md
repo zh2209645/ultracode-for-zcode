@@ -1,5 +1,10 @@
 # 03 — 动态委派政策
 
+> EN: Delegation policy — when NOT to delegate, when to use read-only Explore or
+> worker-review, how to score task difficulty 0-2 per dimension and pick the lightest
+> sufficient tier, escalation and evidence rules, and the trusted task-contract format
+> (TASK / SCOPE / CONSTRAINTS / CONTEXT / ACCEPTANCE / VERIFY / RETURN).
+
 ## 1. 核心原则
 
 1. **先判断是否值得委派。**

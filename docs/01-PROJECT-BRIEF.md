@@ -1,5 +1,9 @@
 # 01 — 项目简介与范围
 
+> EN: Project brief and scope — a ZCode-native delegation-policy plugin distilled from
+> oh-my-claudecode; the first version ships one skill, one command, three write workers,
+> and one read-only reviewer, with no hooks / MCP / runtime / persistent state.
+
 ## 项目代号
 
 `zcode-dynamic-workflow`

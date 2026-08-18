@@ -2,6 +2,22 @@
 
 > 面向本地 LLM 的离线实施资料。目标是从 **oh-my-claudecode（OMC）** 中提炼最有价值的“按任务难度分级委派”思想，在 ZCode 中实现一个轻量、原生、无额外运行时的 Dynamic Workflow MVP。
 
+## 0. 当前状态 / Current Status（2026-08-19）
+
+- 当前版本 0.1.4：签名 tag `v0.1.4` 已发布（ed25519 GPG `6B699BE4A10CE49F`，`git verify-tag` good signature），marketplace source 固定该 tag，三处版本一致——S-12 全部通过，无剩余门禁项。
+- 0.1.3 回归实测：强制场景 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 全部 PASS（8/8），静态 S-03/S-04/S-05/S-06/S-10 通过；插件已经 GitHub marketplace 在应用内更新安装（ZCode 3.7.7）。完整记录见 `docs/08-TEST-RECORD.md` §11–§12 与 `docs/09-FINAL-REPORT.md`。
+- 建议（非门禁）：GitHub 账号添加签名公钥以显示 Verified 徽标；ZCode 刷新 marketplace 更新至 0.1.4 并新开会话复验。
+
+> **English abstract**: This kit distills the task-difficulty-based delegation idea from
+> oh-my-claudecode into a lightweight, native ZCode plugin. The primary Agent plans the task
+> graph itself and routes each atomic subtask to direct work, built-in `Explore`, read-only
+> `worker-review`, or one of three write-capable tiers (`worker-fast` / `worker-standard` /
+> `worker-deep`), running independent tasks as parallel waves and dependent tasks in order.
+> The plugin is declarative Markdown/JSON only — no hooks, no MCP, no extra runtime, no
+> persistent state. v0.1.3 passed all eight mandatory regression scenarios in-app on ZCode
+> 3.7.7 (2026-08-19); the docs-only v0.1.4 release pins the marketplace to the GPG-signed
+> `v0.1.4` tag, closing S-12.
+
 ## 1. 一句话目标
 
 让 **ZCode 主 Agent 自己规划任务图**，并根据每个子任务的难度、风险和独立性，选择：

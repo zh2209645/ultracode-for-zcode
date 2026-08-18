@@ -1,7 +1,9 @@
 # Model Mapping
 
-Status: **configured locally for this machine** (2026-08-19). The four Agent files use real
-model IDs. Remote installation remains pending until the corresponding `v0.1.3` release tag is published.
+Status: **configured and verified** (2026-08-19). The four Agent files use real model IDs
+and were all exercised in the v0.1.3 regression session (docs/08 §11). Release `v0.1.4` is
+published as a GPG-signed tag with the marketplace ref pinned to it (S-12 closed); the
+in-app GitHub update path was proven at v0.1.3.
 
 ## Active mapping (Option B — one model, three effort levels)
 

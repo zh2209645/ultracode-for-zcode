@@ -1,5 +1,9 @@
 # 07 — 来源映射、兼容边界与许可证
 
+> EN: Source map — snapshots of the upstream oh-my-claudecode material consulted, the
+> compatibility boundary (ideas only, no upstream code copied), and MIT license /
+> attribution obligations preserved in LICENSE, references/omc/LICENSE, and NOTICE.md.
+
 ## 1. 快照信息
 
 编制日期：2026-08-18

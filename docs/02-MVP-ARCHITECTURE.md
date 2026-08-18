@@ -1,5 +1,10 @@
 # 02 — MVP 架构
 
+> EN: MVP architecture — the primary Agent is the only orchestrator: it plans the task
+> graph, scores each atomic task (scope / ambiguity / coupling / risk / verification
+> cost), routes it to direct work, Explore, worker-review, or fast/standard/deep writers,
+> and runs dependency waves under the 3-write / 10-total concurrency caps.
+
 ## 1. 总体架构
 
 ```text

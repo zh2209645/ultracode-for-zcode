@@ -1,5 +1,9 @@
 # 04 — 迁移与重构执行方案
 
+> EN: Migration plan — concept extraction plus native ZCode rewrite (no OMC compatibility
+> layer), phased rollout, release steps (push main, protected/signed tag, marketplace
+> refresh, new session), and the re-regression triggers after policy/model changes.
+
 ## 1. 迁移策略
 
 本项目采用“概念提炼 + ZCode 原生重写”，不采用“OMC 全量兼容层”。

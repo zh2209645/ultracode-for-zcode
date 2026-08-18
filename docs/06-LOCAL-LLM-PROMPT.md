@@ -1,5 +1,8 @@
 # 06 — 可直接交给本地 LLM 的主提示
 
+> EN: A self-contained master prompt that can be handed to a local LLM to reproduce this
+> migration on another machine; replace the path and model-mapping placeholders before use.
+
 下面内容可以整段复制给负责迁移和重构的本地 LLM。先把路径和四个 Agent 的模型映射占位符替换为实际值。
 
 ---
