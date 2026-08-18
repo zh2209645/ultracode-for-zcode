@@ -3,11 +3,11 @@
 > EN: Acceptance tests — static checks S-01..S-12 and functional scenarios F-01..F-15.
 > Mandatory gates: F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14/F-15, routing accuracy ≥ 80%,
 > deep misuse ≤ 20%, no nested delegation, no infinite retries. Current results (2026-08-19):
-> v0.1.5 released with the request-sizing/context-hygiene/orchestrator-mode prompt updates
-> and the widened F-15 gate, after three independent adversarial review rounds. The live
-> mandatory regression has NOT been re-run on v0.1.5 and must pass before the next release;
-> the last executed regression (8/8 PASS, on unchanged v0.1.4 behavior via v0.1.3) is in
-> docs/08 §11–§12; the v0.1.5 release record is docs/08 §13.
+> the v0.1.5 live mandatory regression — all nine gates plus the three v0.1.5 fix-seam
+> probes — PASSED in a fresh 0.1.5 session (22 real plugin dispatches, routing 9/9, deep
+> misuse 0, no nesting, no infinite retries); full record in docs/08 §14. Release history:
+> v0.1.5 shipped after three adversarial review rounds (docs/08 §13); the prior regression
+> (8/8 PASS on v0.1.3 behavior) is docs/08 §11–§12.
 
 ## 1. 静态加载测试
 
