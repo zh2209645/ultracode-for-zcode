@@ -85,7 +85,7 @@ plugins/zcode-dynamic-workflow/agents/worker-deep.md
    - 8–10：deep。
 5. 只读搜索使用内置 Explore。
 6. 安全、认证、授权、数据、公开 API、架构和复杂重构至少使用 deep 分析或 deep 复核。
-7. 默认最大并发 10。
+7. 可写 worker 最大并发 3；仅只读 Explore 可将 subagent 总并发提高到 10。
 8. 同文件写任务和有依赖任务不得错误并行。
 9. fast 失败升级 standard；standard 失败或风险扩大升级 deep；deep 失败交回主 Agent重规划。
 10. 同一任务最多自动升级一次。
@@ -93,6 +93,9 @@ plugins/zcode-dynamic-workflow/agents/worker-deep.md
 12. worker 返回 status、summary、files/evidence、verification、risks/blockers。
 13. 主 Agent必须基于实际证据做最终验证。
 14. 不使用 Claude Code 专用 `Task(...)` 语法；依赖 ZCode 原生 Agent 工具。
+15. worker 关闭 AGENTS.md 自动注入，不获得 Bash、WebFetch、WebSearch 或 MCP 工具；命令、网络访问和最终验证由主 Agent执行。
+16. 可写 worker 仅在 Confirm Before Changes 或等价受限宿主模式下使用；不可信仓库禁止 Full Access 写委派。
+17. 只有写文件任务可读写工作区 `.zcode/**` 中的当前任务 todo/log；探索、分析、复核和验证任务只通过 ZCode subagent 返回结果，不访问 `.zcode`。用户级 `~/.zcode`、缓存、凭据和其他 session 日志禁止访问，共享日志文件必须串行更新。
 15. Prompt 保持短而明确，不复制 OMC 的长角色体系。
 
 ## 实施步骤

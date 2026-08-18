@@ -8,10 +8,10 @@
         "source": "git-subdir",
         "url": "https://github.com/zh2209645/ultracode-for-zcode.git",
         "path": "plugins/zcode-dynamic-workflow",
-        "ref": "main"
+        "ref": "v0.1.2"
       },
       "description": "Main-agent-planned dynamic delegation to fast, standard, and deep ZCode subagents",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "category": "developer-tools",
       "tags": [
         "workflow",

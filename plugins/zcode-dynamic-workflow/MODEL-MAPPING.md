@@ -47,7 +47,7 @@ mapping that is fully evidenced.
 
 ## Validation
 
-1. Search the plugin package for `REPLACE_WITH_` — must find nothing.
+1. Search the plugin package for unresolved model-placeholder prefixes — the search must find nothing.
 2. Start a new ZCode session.
 3. Explicitly invoke each worker with a trivial task.
 4. Confirm the expected model and effort are used.

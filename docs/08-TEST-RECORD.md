@@ -14,15 +14,17 @@
 | ID | 结果 | 证据 |
 |---|---|---|
 | S-01 | PASS | `marketplace.json` JSON 解析通过；插件 source 为 `git-subdir` 对象形式（`url` + `path: plugins/zcode-dynamic-workflow`），与本机已验证可用的 claude-plugins-official 条目及 zcode 安装代码分支一致（相对路径字符串形式在 GitHub marketplace 安装时报 Unsupported source，已修复） |
-| S-02 | PASS | `plugin.json` name 符合 `^[a-z0-9][a-z0-9._-]{0,127}$`；skills/commands/agents 三个组件目录存在；marketplace 与 plugin 版本一致（0.1.0） |
+| S-02 | PASS | `plugin.json` name 符合 `^[a-z0-9][a-z0-9._-]{0,127}$`；skills/commands/agents 三个组件目录存在；marketplace、plugin 与 Skill metadata 版本一致（0.1.2） |
 | S-03 | PASS | 结构合规 + 在应用内确认（2026-08-19：插件安装启用后随会话加载，`/ultracode` 正常触发并挂载 skill） |
 | S-04 | PASS | `commands/ultracode.md` 含 description、`$ARGUMENTS`、`skills: dynamic-workflow`，文件名符合 `^[a-z0-9][a-z0-9_:-]{0,63}$`；在应用内 `/ultracode` 可用（用户确认） |
-| S-05 | PASS | 三个 agent 文件 frontmatter 完整：name/description/model/maxTurns/injectAgentsMd；在应用内确认（2026-08-19：主 Agent 成功派发 worker-fast subagent，worker-standard/deep 经同一加载机制注册）。注：插件 agent 不显示在 Settings → Subagents（该页仅列用户级 agent），以实际派发为准——预期行为 |
-| S-06 | PASS | 插件包内无 `REPLACE_WITH_` 残留（仅 MODEL-MAPPING.md 的校验说明文本提及）；model ID 存在于本机激活 provider `builtin:zai-coding-plan`，三个 thoughtLevel 均在其 `GLM-5.3` 支持列表内 |
+| S-05 | PASS | 三个 agent 文件 frontmatter 完整：name/description/model/maxTurns/injectAgentsMd/tools；`injectAgentsMd: false` 与穷举工具白名单静态验证通过。应用内派发证据来自 0.1.0；0.1.2 新会话复验待发布 tag 后执行 |
+| S-06 | PASS | 插件包内无未解析模型占位前缀；model ID 存在于本机激活 provider `builtin:zai-coding-plan`，三个 thoughtLevel 均在其 `GLM-5.3` 支持列表内 |
 | S-07 | PASS | frontmatter 键全部为文档认可字段，`thoughtLevel` 拼写正确（camelCase） |
 | S-08 | PASS | manifest 无 hooks/mcpServers/dependencies 键；插件目录无 hooks/、无 .mcp.json、无运行时代码、无状态文件 |
 | S-09 | PASS | 项目 LICENSE、上游 `references/omc/LICENSE`、NOTICE.md 致谢均存在 |
-| S-10 | PASS | 安装启用后新会话正确加载（2026-08-19 确认：`/ultracode` 命令可用且主 Agent 可派发 worker subagent） |
+| S-10 | PARTIAL | 0.1.0 安装启用后新会话正确加载（2026-08-19 确认）；0.1.2 必须在发布 `v0.1.2` tag 后刷新 marketplace 并新开 session 复验 |
+| S-11 | PASS | 30 项权限静态检查通过：三个 worker 均关闭 AGENTS.md 注入；仅有 Read/Edit/Write/Glob/Grep；无 Bash/Web/MCP；只有写文件任务可读写工作区 `.zcode/**` 当前任务 todo/log，探索/分析/验证任务不访问 `.zcode`，用户级 `~/.zcode` 等明确禁止 |
+| S-12 | PARTIAL | marketplace/plugin/Skill 版本均为 0.1.2，source 已固定 `v0.1.2`；远端 tag 尚待发布，因此远端可安装性未验证 |
 
 静态检查由一次性脚本执行（未入库，符合 docs/04 §5 要求）。
 
@@ -217,7 +219,9 @@
 - 远端发布（push GitHub）前建议将 plugin.json / marketplace.json / SKILL.md metadata 版本升至
   0.1.1，便于已安装用户收到更新提示（本轮未动版本号，保持本地缓存目录 0.1.0 一致性）。
 
-## 8. 安全审核（2026-08-19，第三轮会话）
+## 8. 安全审核（2026-08-19，第三轮会话，0.1.1 历史记录）
+
+本节记录 0.1.1 当时的判断，已被 §9 的 0.1.2 修复取代；其中“浮动 main 非代码执行风险”和“现有工具权限正确”的结论不再作为当前安全结论。
 
 方法：独立安全审查由只读安全分析 agent（grill:security，对位 deep 层独立复核）执行，
 主 Agent 交叉核验其引用后实施加固；静态面由主 Agent 直接审计。
@@ -259,3 +263,29 @@
 
 加固随版本 0.1.1 发布（plugin.json / marketplace.json / SKILL.md metadata 同步）。
 生效方式：UI 刷新 marketplace → 更新插件 → 新开 session。
+
+## 9. 权限修复（2026-08-19，0.1.2）
+
+### 修复目标
+
+根据 §8 后续复核发现，0.1.1 仍把 `Bash`、网络工具、AGENTS.md 注入和文件写权限组合在同一 worker 中，且 marketplace 使用浮动 `main`。0.1.2 按 ZCode 官方 subagent、permission mode 和 plugin 文档收紧权限，同时保留写文件 worker 更新工作区 `.zcode/**` todo/任务日志的能力。
+
+### 已实施控制
+
+1. 三个 worker 全部设为 `injectAgentsMd: false`，主 Agent只传入审查后的最小可信项目规则。
+2. 三个 worker 的穷举白名单统一为 `Read, Edit, Write, Glob, Grep`；移除 `Bash`、`WebFetch`、`WebSearch`，并继续排除所有 MCP 工具。命令、网络访问、测试和构建由主 Agent执行。
+3. 只有明确承担文件写入的任务可以读写工作区相对路径 `.zcode/**`，且仅限当前任务 todo/log。Explore、分析、复核、验证任务不访问 `.zcode`，通过 ZCode subagent 返回结果。用户级 `~/.zcode`、缓存、凭据、其他 session 日志与插件自有恢复数据库均禁止。
+4. 可写 worker 并发上限从 10 收紧为 3；仅只读 Explore 可以把 subagent 总并发提高到 10。共享 `.zcode` todo/log 文件串行更新，并行 worker 使用不同日志文件。
+5. 写委派要求 `Confirm Before Changes` 或等价受限 sandbox；不可信仓库禁止在 `Full Access` 下派发可写 worker。
+6. marketplace/plugin/Skill 版本同步到 0.1.2，远端 source 固定到 `v0.1.2` tag；发布时必须保护或签名该 tag；删除插件包内自引用的模型占位前缀文本。
+
+### 静态验证
+
+- PowerShell 结构化检查：30/30 PASS。
+- 覆盖：三处版本、固定 ref、三个 agent 的注入开关/精确工具表/无 Shell-Web-MCP、`.zcode` 写任务门禁、只读任务通过 ZCode 返回、用户级 `.zcode` 禁止、3/10 双层并发、Confirm Before Changes、Full Access 禁止、无 Hook/MCP/runtime/executable、无模型占位前缀。
+- JSON 解析与 `git diff --check`：PASS。
+
+### 未完成的外部验证
+
+- `v0.1.2` tag 尚未发布，因此 S-10（0.1.2 新会话加载）与 S-12（远端 tag 可安装性）保持 PARTIAL。
+- 发布后需：刷新 marketplace → 更新插件 → 新开 session → 分别派发一个写任务和一个验证任务，确认前者可更新工作区 `.zcode` todo/log，后者只通过 subagent 结果返回且不写 `.zcode`。
