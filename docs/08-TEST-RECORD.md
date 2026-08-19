@@ -1,8 +1,8 @@
 # 08 — 验收测试记录
 
-- 插件版本：0.1.4（2026-08-19 由 GPG 签名 tag `v0.1.4` 正式发布；行为回归证据来自未改变运行组件的 0.1.3）
+- 插件版本：0.1.5（2026-08-19 由 GPG 签名 tag `v0.1.5` 正式发布；§14 为 0.1.5 实跑强制回归，§15 为宿主 3.8.1 升级后核心功能复验；更早版本证据见各节）
 - 日期：2026-08-18
-- ZCode 版本：本机桌面版 3.7.7（0.1.3 回归当日确认；0.1.0 历史记录当日版本未单独记录）
+- ZCode 版本：本机桌面版（§1–§14 各节当日为 3.7.7，用户确认；2026-08-19 宿主升级 3.8.1，升级后复验见 §15）
 - 主 Agent 模型：`builtin:zai-coding-plan/GLM-5.3`
 - 测试方式说明：插件 Skill/Command/Agent 在会话启动时加载，行为测试当日的会话无法热加载插件包内
   worker。因此功能场景以「内置 subagent + worker 系统提示词全文作为委派 prompt」的替身
@@ -522,4 +522,55 @@ docs-only 版本收口：本版本不改变任何 Skill/Command/Agent 行为，�
   客户端侧、会话内不可观测；low/high/max 档位差异未量化（无升级样本）。
 - ZCode 版本沿用 2026-08-19 当日用户确认的 3.7.7，本会话未再确认。
 - 测试产物：`.tmp-v015-verify/` 与 `D:\WorkSpace\zcode-v015-sentinel\` 为一次性目录，测试后清理。
+
+## 15. ZCode 3.8.1 升级后核心功能复验（2026-08-19）
+
+宿主由 3.7.7 升级至 3.8.1 后，用户经 `/ultracode` 发起插件功能验证；本节由 0.1.5 插件新会话（编排者模式）
+驱动，全部 subagent 均为真实插件组件。结论：装载、命令→Skill 挂载、四 agent 注册、三类委派通道
+（内置 Explore / worker-fast / worker-review）与只读边界全部通过。本节为宿主环境变化后的比例化核心复验，
+非 §14 全量行为回归的重跑（覆盖差异见下「门覆盖映射」）。
+
+> EN digest: after the host updated from 3.7.7 to 3.8.1, a fresh orchestrator-mode session with
+> plugin 0.1.5 re-verified core functionality via /ultracode: plugin enabled in host config,
+> command→skill mounting, four-agent registration, live Explore ×2 (file:line evidence), a
+> worker-fast write probe (Read+Write, model resolved, content re-checked by the primary Agent,
+> scratch file cleaned up), and a worker-review acceptance verdict (pass) that honored its
+> read-only scope and exclusions. Cache==source diff was identical before these doc updates.
+> All passed. This is a proportionate core re-verification, NOT a rerun of the §14 behavioral
+> regression.
+
+### 环境与加载
+
+- 宿主版本：3.8.1（用户确认；CLI 不在 PATH、安装目录无 version 文件、当日日志未含版本串，无法独立证实——
+  沿用本记录「宿主版本以用户确认为准」的惯例，§11/§14 同）。
+- 插件启用：`~/.zcode/cli/config.json` 的 `enabledPlugins` 含 `zcode-dynamic-workflow@ultracode-for-zcode: true`。
+- 缓存一致性：`diff -r` 确认 0.1.5 缓存与仓库源 `plugins/zcode-dynamic-workflow/` 逐文件一致（本次文档更新前；
+  更新后 `plugins/zcode-dynamic-workflow/README.md` 出现预期内差异，缓存为 v0.1.5 发布时快照）。
+- 版本敏感点：四个 agent 硬编码模型 `builtin:zai-coding-plan/GLM-5.3` 在 3.8.1 下解析正常
+  （worker-fast 活体派发成功）；更新前全仓无任何 3.8 引用，历史记录均为 3.7.7。
+
+### 探针记录
+
+| 探针 | 路由 | 结果 | 关键证据 |
+|---|---|---|---|
+| 回归清单与缓存一致性发现 | Explore | PASS | 定位 §13/§14 定义与上轮环境参数；`diff -r` 空输出 |
+| 版本敏感配置盘点 | Explore | PASS | 4 agent frontmatter 七字段齐全（agents/worker-*.md:2-8）；marketplace/plugin/Skill 版本三处 0.1.5 |
+| 写入活性探针 | worker-fast | PASS | 读 plugin.json（version 0.1.5）→ 创建 `.tmp-v381-verify/fast-probe.md` → 主 Agent 读回逐行复核一致 → 清理，工作树恢复 clean |
+| 接线验收裁决 | worker-review | PASS | VERDICT pass：plugin.json 三字段+目录指针、4×7 frontmatter 字段、review 工具恰为 Read/Glob/Grep、写 worker 含 Edit/Write、injectAgentsMd 均 false、版本三处一致；全程未触碰排除路径（.zcode/.git/.tmp） |
+
+### 门覆盖映射
+
+- 活体覆盖：F-01（主 Agent 直接完成版本检查、复核与清理等琐碎项）、F-02（Explore×2，file:line 证据、零写操作）、
+  F-12（4 次委派全为原子任务契约、零嵌套、主控权在主 Agent）、F-15（编排者模式三波执行与主上下文卫生）、
+  F-14 合规面（reviewer 遵守 SCOPE 与排除路径、零写痕迹）。
+- 未重跑：F-05/F-07/F-09/F-13 的对抗性场景链（注入哨兵、junction/symlink/TOCTOU、依赖波次全链）；
+  worker-standard/worker-deep 为注册确认 + 静态验证，本轮任务按路由规则无需其派发（强行派发琐事即违反本插件策略）。
+
+### 如实记录的局限
+
+- 宿主版本号未能从文件系统独立证实（见「环境与加载」）；本节全部活体证据属于「当前宿主」，与用户所述 3.8.1 对应。
+- 核心复验 ≠ 全量回归：如需按 docs/05 §5 重跑全部 9 门，参照 §14 的载体与哨兵设计另行执行。
+- 本次为文档更新，`SHA256SUMS.txt` 由主 Agent 按仓库惯例重新生成并全量校验（b16a4ab 先例）；
+  已签名 `v0.1.5` tag 内容不变，tag 与仓库 HEAD 的文档差异属发布后补录，先例同 b16a4ab。
+- worker-fast 探针的读回步骤被宿主判为冗余调用（文件状态由 harness 跟踪），主 Agent 以独立读回复核闭环。
 

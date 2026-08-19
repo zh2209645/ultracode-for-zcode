@@ -2,7 +2,7 @@
 
 - 日期：2026-08-19
 - Plugin version：0.1.5（签名 tag `v0.1.5` 发布；0.1.5 含 F-15 的强制回归已于发布当日在 0.1.5 新会话补测通过，见 docs/08 §14；更早的回归实测基于 0.1.3，0.1.4 为 docs-only 升级）
-- ZCode 环境：Windows 桌面版 3.7.7，激活 provider `builtin:zai-coding-plan`（Z.ai Coding Plan）
+- ZCode 环境：Windows 桌面版（0.1.5 回归当日为 3.7.7；2026-08-19 升级 3.8.1，核心功能复验通过，见 docs/08 §15），激活 provider `builtin:zai-coding-plan`（Z.ai Coding Plan）
 
 ## Executive Summary (EN)
 
@@ -98,6 +98,7 @@ Option B（同一模型、三档思考等级）——这是唯一完全被本机
 - docs/03 and docs/06 were rewritten in English; docs/05 gained the F-15 orchestrator-mode scenario, now a mandatory gate.
 - Validation: three independent adversarial review rounds (round 3 included a blind full-changeset pass), all verdicts pass; 5 defects fixed in round 1, 3 in round 2, zero new in round 3. Static S-01..S-12 conditions preserved: declarative-only package, versions synchronized to 0.1.5, marketplace ref pinned to the GPG-signed `v0.1.5` tag, checksums regenerated.
 - Open obligation: CLOSED (2026-08-19, later the same day). The F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14/F-15 live regression plus the three v0.1.5 fix-seam probes was run in a fresh 0.1.5 session and passed in full — 22 real plugin dispatches, routing accuracy 9/9, deep misuse 0, zero nested delegation, zero infinite retries; full record in docs/08 §14.
+- Post-update re-verification (2026-08-19, ZCode 3.8.1): after the host update, a fresh `/ultracode` orchestrator session re-verified core functionality — plugin enabled, `/ultracode` + skill mounting, four-agent registration, live Explore ×2 / worker-fast write probe / worker-review verdict (pass) with read-only boundaries honored, cache==source before the doc update. Proportionate core re-verification; the §14 full behavioral regression was not rerun. Full record in docs/08 §15.
 - Scope guard: no Hook, MCP server, executable runtime, or persistent workflow state was introduced.
 
 ## Acceptance

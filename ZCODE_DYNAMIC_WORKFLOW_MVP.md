@@ -10,9 +10,10 @@
 > the work and dispatches atomic subtasks to difficulty-matched ZCode subagents (direct work,
 > built-in Explore, read-only worker-review, or worker-fast/standard/deep). The primary Agent
 > remains the only orchestrator; hooks, MCP servers, extra runtimes, persistent state, and
-> nested delegation are all out of scope. Release status (2026-08-19): v0.1.4 is formally
-> published from a signed tag with every mandatory gate closed. Its unchanged runtime
-> behavior is covered by the v0.1.3 in-app regression (8/8 PASS) — see docs/08 §11–§12.
+> nested delegation are all out of scope. Release status (2026-08-19): v0.1.5 is formally
+> published from a signed tag; its mandatory regression (including F-15 and the three
+> fix-seam probes) passed the same day (docs/08 §13–§14), and core functionality was
+> re-verified after the ZCode 3.8.1 host update (docs/08 §15).
 
 ZCode 已经原生提供主 Agent、隔离 subagent、并行前台执行、后台执行、Skill、Command 和插件打包能力。首版因此不需要另建任务服务器、队列、Hook 状态机或 MCP 编排器。插件只需向主 Agent提供一套清晰的委派政策，并注册三个可写 worker 和一个只读 reviewer。
 

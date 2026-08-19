@@ -6,6 +6,9 @@
 > regression scenarios F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 (8/8) plus static checks
 > S-03/S-04/S-05/S-06/S-10 on ZCode 3.7.7 (2026-08-19). S-12 was closed by the GPG-signed
 > v0.1.4 release. Full evidence: docs/08 §11–§12, docs/09.
+> Post-update note (2026-08-19): after the ZCode host updated to 3.8.1, core plugin
+> functionality (loading, mounting, registration, live dispatch, read-only boundaries)
+> was re-verified and passed — docs/08 §15.
 
 ## A. 环境与模型
 
