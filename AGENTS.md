@@ -1,88 +1,82 @@
-# 本地 LLM 项目指令：ZCode Dynamic Workflow MVP
+# 项目指令：zcode-dynamic-workflow（维护期）
 
-## 任务使命
+## 项目状态
 
-在不移植 OMC 重型运行时的前提下，实现一个 ZCode 原生插件，使主 Agent 能够：
+`zcode-dynamic-workflow` 是一个纯声明式 ZCode 插件（JSON + Markdown，无任何可执行代码），为 ZCode 主 Agent 提供动态任务拆分与委派策略。MVP 已于 2026-08-18 完成，插件效果评估全部通过。当前发布版本 **v0.1.5**（2026-08-19，GPG 签名 tag），marketplace ref 已固定到该 tag。项目处于维护期。
 
-1. 自行理解用户目标并动态拆分任务；
-2. 判断哪些工作应直接完成、哪些应委派；
-3. 按难度选择 `worker-fast`、`worker-standard` 或 `worker-deep`；
-4. 使用 ZCode 内置 `Explore` 进行只读代码库探索；
-5. 使用高性能模型驱动的只读 `worker-review` 进行高风险独立复核、裁决和验收证据检查，一般探索与普通分析不使用该 Agent；
-6. 将独立任务并行，将有依赖任务按波次执行；
-7. 汇总结果、在必要时升级任务层级，并执行最低限度验证。
+## 仓库结构
 
-## 必读文件
+```text
+marketplace.json                  本地 marketplace manifest（ref 固定到签名 tag）
+SHA256SUMS.txt                    发布物校验和
+plugins/zcode-dynamic-workflow/   插件发布目录
+├── .zcode-plugin/plugin.json     插件 manifest（版本号在此维护）
+├── commands/ultracode.md         /ultracode 编排模式命令
+├── skills/dynamic-workflow/SKILL.md  动态拆解与路由规则（行为核心）
+├── agents/worker-fast.md         低难度写任务（thoughtLevel: low）
+├── agents/worker-standard.md     常规写任务（thoughtLevel: high）
+├── agents/worker-deep.md         高难度写任务（thoughtLevel: max）
+├── agents/worker-review.md       只读高风险复核（thoughtLevel: max）
+├── MODEL-MAPPING.md              模型映射与更换流程
+├── README.md / LICENSE
+docs/01–09                        设计、政策、验收、测试记录、最终报告
+references/                       上游 OMC 与 ZCode 能力参考资料（只读）
+TASKS.md                          维护任务清单（待办与例行检查）
+```
 
-开始修改前，按顺序阅读：
+## 文档地图
 
-1. `ZCODE_DYNAMIC_WORKFLOW_MVP.md`
-2. `docs/03-DELEGATION-POLICY.md`
-3. `docs/04-MIGRATION-PLAN.md`
-4. `docs/05-ACCEPTANCE-TESTS.md`
-5. `plugins/zcode-dynamic-workflow/MODEL-MAPPING.md`
-6. `references/zcode/ZCODE_CAPABILITY_NOTES.md`
-7. `references/omc/ultrawork.SKILL.md`
-8. `references/omc/agent-tiers.md`
+维护时按需查阅，无需按固定顺序通读：
 
-## 强制范围
+- 委派规则与任务契约：`plugins/zcode-dynamic-workflow/skills/dynamic-workflow/SKILL.md`、`docs/03-DELEGATION-POLICY.md`
+- 模型映射与更换步骤：`plugins/zcode-dynamic-workflow/MODEL-MAPPING.md`
+- 验收场景定义：`docs/05-ACCEPTANCE-TESTS.md`
+- 各版本测试证据与平台复验记录：`docs/08-TEST-RECORD.md`
+- 设计背景与架构：`ZCODE_DYNAMIC_WORKFLOW_MVP.md`、`docs/02-MVP-ARCHITECTURE.md`
+- 上游参考（只读，不随发布分发）：`references/omc/`、`references/zcode/`
 
-首版只实现：
+## 产品边界（长期不变式）
 
-- `.zcode-plugin/plugin.json`
-- `skills/dynamic-workflow/SKILL.md`
-- `commands/ultracode.md`
-- `agents/worker-fast.md`
-- `agents/worker-standard.md`
-- `agents/worker-deep.md`
-- `agents/worker-review.md`
-- 必要的说明文档和本地 marketplace manifest
+以下限制是产品决策，不是待办事项。任何突破都必须先单独讨论、记录理由并重跑回归：
 
-禁止加入：
-
-- Team、swarm、mailbox、heartbeat、shared queue；
-- Ralph、持久循环、恢复状态；
-- Hook；
-- MCP server；
-- Node/TypeScript/Python 运行时；
-- HUD、token 统计、通知；
-- worktree 自动管理；
-- 多供应商 CLI 调度；
-- 自动模型发现或复杂配置生成器；
-- subagent 再派生 subagent 的设计。
+- 不引入 Hook、MCP server、Node/TypeScript/Python 运行时或持久状态；
+- 不引入 Team/swarm/mailbox/heartbeat、Ralph 循环、HUD、自动 worktree 管理、多供应商 CLI 调度；
+- 不允许 subagent 再派生 subagent；
+- 发布物只包含 plugin manifest、一个 Skill、一个 command、四个 agent 定义和说明文档；
+- 四个 agent 均设置 `injectAgentsMd: false`；写 worker 工具白名单为 Read/Edit/Write/Glob/Grep，reviewer 为 Read/Glob/Grep，均无 shell、网络和 MCP 工具。
 
 ## 架构原则
 
-- **主 Agent 是唯一 orchestrator。**
-- **主 Agent 保留任务图、依赖关系、结果整合和最终结论。**
+- **主 Agent 是唯一 orchestrator，保留任务图、依赖关系、结果整合和最终结论。**
 - **subagent 只完成被分配的原子任务，不重新定义总目标。**
-- **不为简单任务委派。**
-- **不把本来有依赖的任务伪装成并行任务。**
-- **优先使用 ZCode 原生能力，不发明未在文档中出现的工具调用语法。**
-- **提示词保持短而明确，不复制 OMC 的全部长提示。**
+- **不为简单任务委派；不把有依赖的任务伪装成并行任务。**
+- **探索走内置 `Explore`，高风险独立复核走 `worker-review`，一般分析两者都不用。**
+- **只使用 ZCode 已文档化的原生能力，不发明新的工具调用语法。**
+- **提示词保持短而明确。**
 - **没有证据时不声称验证通过。**
 
-## 实施策略
+## 修改约定
 
-1. 先检查当前骨架是否能被 ZCode 识别。
-2. 找到本机真实模型 ID，配置四个 Agent。
-3. 保持一个 Skill、三个可写 worker 和一个只读 reviewer 的最小结构。
-4. 通过 Agent 的 `description` 提高自动选择准确率。
-5. 让 Skill 定义动态拆解和路由规则，而不是写死固定流水线。
-6. 用场景测试验证委派行为，而不是只检查文件能加载。
-7. 发现问题时先调整 Skill 和 Agent 描述，除非确有必要，不新增代码层。
+1. 行为问题优先通过调整 `SKILL.md` 和 agent `description` 解决，不新增代码层或新文件类型。
+2. 更换模型时按 `MODEL-MAPPING.md` 的流程修改四个 agent frontmatter，并在新会话逐一实测确认生效。
+3. 改动政策或模型后必须重跑回归（见下节），证据追加到 `docs/08-TEST-RECORD.md` 对应小节。
+4. 同步维护 `TASKS.md`：新发现的改进项和例行检查结果记录在那里。
+
+## 验证与回归
+
+- 强制回归场景：F-01 / F-02 / F-05 / F-07 / F-09 / F-12 / F-13 / F-14 / F-15（定义见 `docs/05`，最近一次全过：v0.1.5，9 场景 + 3 探针，`docs/08` §14）。
+- 重跑触发条件：SKILL.md / command / agent 政策变更，模型映射变更，ZCode 主版本更新。
+- 仅文档或发布元数据变更可不重跑行为回归，但需完成静态校验与新会话安装验证。
+- 平台核心复验（加载、挂载、注册、实际派发）已有 Windows（3.7.7 / 3.8.1）与 WSL2 记录（`docs/08` §11、§15、§16），新平台首次使用时照此格式补充。
+
+## 发布流程
+
+1. 同步三处版本号：`plugins/zcode-dynamic-workflow/.zcode-plugin/plugin.json`、`marketplace.json`（`version` 与 `ref`）、根 `README.md` 的 "Current release"。
+2. 重新生成 `SHA256SUMS.txt`。
+3. 推送 main 后打 GPG 签名 tag（`git tag -s vX.Y.Z`）并推送，marketplace `ref` 固定到新 tag。
+4. 在新会话安装/更新，验证 Skill 加载、`/ultracode` 可调用、四类 agent 可实际派发。
+5. 回滚策略见 `docs/04-MIGRATION-PLAN.md` §9。
 
 ## 许可证
 
-OMC 使用 MIT License。若直接复制或实质性改写上游文本，必须在分发物中保留上游版权和许可声明。首版建议“提炼思想、重写文本”，同时保留 `references/omc/LICENSE` 和项目致谢。
-
-## 完成报告
-
-最终报告必须包含：
-
-- 修改和新增的文件；
-- 三个模型层级的实际映射；
-- 每个验收场景的结果；
-- 未通过项及原因；
-- 仍需人工完成的配置；
-- 是否满足“无 Hook、无 MCP、无额外 runtime、无持久状态”。
+本项目按 MIT License 分发。委派概念提炼自 oh-my-claudecode（MIT）；修改相关文本时保留 `NOTICE.md` 致谢与 `references/omc/LICENSE` 中的上游版权和许可声明。

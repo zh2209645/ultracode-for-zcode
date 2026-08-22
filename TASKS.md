@@ -1,55 +1,36 @@
-# MVP 实施任务清单
+# 维护任务清单
 
-> 完成日期：2026-08-18；0.1.4 正式发布更新：2026-08-19。结果细节见 `docs/08-TEST-RECORD.md` 与 `docs/09-FINAL-REPORT.md`。
->
-> English status note: the v0.1.3 plugin (updated in-app via GitHub) passed all mandatory
-> regression scenarios F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14 (8/8) plus static checks
-> S-03/S-04/S-05/S-06/S-10 on ZCode 3.7.7 (2026-08-19). S-12 was closed by the GPG-signed
-> v0.1.4 release. Full evidence: docs/08 §11–§12, docs/09.
-> Post-update note (2026-08-19): after the ZCode host updated to 3.8.1, core plugin
-> functionality (loading, mounting, registration, live dispatch, read-only boundaries)
-> was re-verified and passed — docs/08 §15.
+> MVP 阶段任务已于 2026-08-18 全部完成，插件效果评估通过；v0.1.5 为当前发布版本。
+> 原始实施清单的逐项结果与证据保存在 `docs/08-TEST-RECORD.md` 与 `docs/09-FINAL-REPORT.md`，本文件不再重复，只跟踪维护期待办与例行事项。
 
-## A. 环境与模型
+## 当前状态（2026-08-23）
 
-- [x] 确认当前 ZCode 版本支持插件内 Skill、Command 和 Subagent（官方文档 + 本机 grill 插件 agents 实际加载证据）
-- [x] 确认本机已连接的模型列表（`~/.zcode/v2/config.json` provider 注册表）
-- [x] 记录 fast、standard、deep 和 review 四个 Agent 的模型映射（`builtin:zai-coding-plan/GLM-5.3`，Option B 分层）
-- [x] 若仅使用一个模型，确认其支持的 `thoughtLevel` 值（`low` / `high` / `max`）
-- [x] 配置三个写 Agent 和一个只读 reviewer 的真实模型 ID
+- 发布版本 v0.1.5（2026-08-19，GPG 签名 tag），marketplace ref 已固定。
+- 强制回归 9 场景 + 3 探针全部通过（`docs/08` §14）。
+- ZCode 3.7.7 与 3.8.1 核心链路复验通过（`docs/08` §11、§15）。
+- WSL2 (Ubuntu) 核心复验通过，安装缓存与签名 tag 字节一致（`docs/08` §16）。
 
-## B. 插件结构
+## 待办
 
-> 离线静态校验全部通过（docs/08 §1）；0.1.3 已于 2026-08-19 经 GitHub marketplace 应用内更新安装，并在新会话完成 Skill/Command/四类 Agent 的加载与实际派发复验（docs/08 §11）。插件 agent 不出现在 Settings → Subagents 属预期（该页仅列用户级 agent），以实际派发记录为准。
+- [ ] 评估 `worker-fast` 切换到 `glm-5-turbo`：先在本机新会话确认确切的 model ID 拼写与 `thoughtLevel` 取值，再改 frontmatter 并逐一实测（见 `plugins/zcode-dynamic-workflow/MODEL-MAPPING.md` Option A）。
+- [ ] ZCode 发布新版本时复验核心链路：插件加载、`/ultracode` 挂载、agent 注册、Explore/worker 实际派发，并追加 `docs/08` 记录。
+- [ ] 在更多平台（如 macOS）补充核心复验记录（现有 Windows 与 WSL2 证据）。
+- [ ] 收集一段时间的实际使用反馈后，评估是否需要调整 `SKILL.md` 的请求定级与路由阈值。
 
-- [x] 验证 `.zcode-plugin/plugin.json` 可被加载（schema 校验 + 与已安装插件对照）
-- [x] 验证 `marketplace.json` 格式符合官方 marketplace schema，`git-subdir` source 结构可解析；0.1.4 source 固定到已验证签名的 `v0.1.4` tag，S-12 已关闭
-- [x] 在 0.1.3 新会话验证 Skill 加载（2026-08-19：Skill 从 0.1.3 缓存路径实际注入会话，docs/08 S-03）
-- [x] 在 0.1.3 新会话验证 `/ultracode` 可调用（2026-08-19 实测，docs/08 S-04）
-- [x] 验证 fast/standard/deep/review 四个 Agent 可实际派发（2026-08-19：standard×2、deep×2、fast×2、review×3，docs/08 S-05/S-06）
+## 例行发布检查单（每次发版勾选）
 
-## C. 动态委派策略（F-01 至 F-12 为 0.1.0 历史证据，见 docs/08 §2）
+- [ ] 行为有变更时重跑强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14/F-15，并追加 `docs/08` 记录
+- [ ] 同步三处版本号：`plugin.json`、`marketplace.json`（`version` + `ref`）、根 `README.md`
+- [ ] 重新生成 `SHA256SUMS.txt`
+- [ ] `git tag -s` 签名发布并推送，marketplace `ref` 固定到新 tag
+- [ ] 新会话安装/更新验证 + 版本一致性检查
+- [ ] 确认未引入 Hook / MCP / 额外 runtime / 持久状态
 
-- [x] 主 Agent 能识别“无需委派”的简单任务（F-01）
-- [x] 主 Agent 能用内置 Explore 处理只读探索（F-02）
-- [x] 主 Agent 在 0.1.0 历史场景中能按难度选择 fast / standard / deep（F-03/F-04/F-05/F-09；当前只读复核路由已由 reviewer 取代）
-- [x] 主 Agent 能识别独立任务并并行派发（F-03/F-06，并发 ≤3）
-- [x] 主 Agent 能识别依赖并按波次派发（F-07）
-- [x] 主 Agent 能在 worker 失败后升级一个层级（F-08：blocked → 携证据单次升级）
-- [x] 主 Agent 不会让 subagent 接管总任务规划（F-12）
-- [x] 主 Agent 能汇总结果并执行最终验证（F-10 独立复跑证据）
+## 历史里程碑
 
-## D. 验收
-
-- [x] 完成 0.1.3 配置、权限、结构和校验和静态检查
-- [x] 完成 S-03/S-04/S-05/S-06/S-10 的 0.1.3 新会话发现、调用和加载验证（2026-08-19，ZCode 3.7.7）
-- [x] 完成 S-12 的受保护或签名 tag 发布与远端安装验证（0.1.4 收口：`git tag -s` 签名发布、marketplace ref 固定 `v0.1.4`、三处版本一致；GitHub 应用内更新链路已于 0.1.3 实证，docs/08 §12）
-- [x] 完成 F-01–F-12 的 0.1.0 历史功能场景（12/12）
-- [x] 在 0.1.3 新会话重跑强制回归 F-01/F-02/F-05/F-07/F-09/F-12/F-13/F-14（8/8 PASS，2026-08-19，docs/08 §11）
-- [x] 记录实际委派轨迹（docs/08）
-- [x] 确认没有新增 Hook
-- [x] 确认没有新增 MCP
-- [x] 确认没有新增 Node/TS/Python runtime
-- [x] 确认没有新增持久状态目录
-- [x] 检查 MIT 许可证和致谢（LICENSE、references/omc/LICENSE、NOTICE.md）
-- [x] 生成最终实施报告（docs/09；已同步 0.1.3 行为回归证据与 0.1.4 正式发布结论）
+- 2026-08-18 — 0.1.0 MVP 完成，F-01–F-12 全过（`docs/08` §2）
+- 2026-08-19 — 0.1.2 安全整改；0.1.3 经 GitHub 应用内更新安装并完成 8 场景回归（`docs/08` §11）
+- 2026-08-19 — 0.1.4 签名发布，收口 S-12（版本同步、ref 固定、签名 tag，`docs/08` §12）
+- 2026-08-19 — 0.1.5 发布：请求定级、上下文卫生、orchestrator 模式；9 场景 + 3 探针回归通过（`docs/08` §14）
+- 2026-08-19 — ZCode 3.8.1 升级后核心复验通过（`docs/08` §15）
+- 2026-08-23 — WSL2 核心复验通过，首个非 Windows 主机记录（`docs/08` §16）
