@@ -574,3 +574,64 @@ docs-only 版本收口：本版本不改变任何 Skill/Command/Agent 行为，�
   已签名 `v0.1.5` tag 内容不变，tag 与仓库 HEAD 的文档差异属发布后补录，先例同 b16a4ab。
 - worker-fast 探针的读回步骤被宿主判为冗余调用（文件状态由 harness 跟踪），主 Agent 以独立读回复核闭环。
 
+## 16. WSL2 环境核心功能复验（2026-08-23）
+
+用户在 WSL2（Ubuntu）环境下经 `/ultracode` 发起插件可用性验证；本节由 0.1.5 插件编排者会话驱动，
+全部 subagent 均为真实插件组件。结论：装载、命令→Skill 挂载、四 agent 注册、三类委派通道（内置
+Explore / worker-fast / worker-review）与只读边界在 WSL2 下全部通过——「核心可用」。措辞不主张
+「完整可用」：worker-standard/worker-deep 未活体派发，F-05/F-07/F-09/F-13 未重跑（见「门覆盖映射」
+与「如实记录的局限」）。本节为 WSL2 首次测试记录：§11–§15 均在 Windows 宿主执行。
+
+> EN digest: first test record on WSL2 (Ubuntu, kernel 6.18.33.2-microsoft-standard-WSL2). A fresh
+> orchestrator-mode session with plugin 0.1.5 re-verified core functionality via /ultracode: plugin
+> enabled in host config, command→skill mounting, four-agent registration, live Explore ×2, a
+> worker-fast write probe under the workspace .zcode/ (content re-checked by the primary Agent,
+> scratch cleaned, tree restored clean), and a worker-review verdict — pass for "core available"
+> (aligned with the §15 proportionate standard), fail only for the literal "fully available"
+> wording. Cache==signed tag v0.1.5 verified byte-identical; README drift vs main is expected
+> post-release docs. NOT a rerun of the §14 behavioral regression; the remote-environment branch
+> (SSH/container) remains untested.
+
+### 环境与加载
+
+- 环境：WSL2（`uname -r` = 6.18.33.2-microsoft-standard-WSL2；`WSL_DISTRO_NAME=Ubuntu`；`/proc/version`
+  含 microsoft；用户 qianp；工作区 /home/qianp/WorkSpaces/ultracode-for-zcode，无符号链接）。
+- 宿主版本：CLI 位于 /usr/bin/zcode 但 `--version` 启动完整客户端无法快速取得版本号，未独立证实
+  （沿 §11/§14/§15「以用户确认为准」惯例；本会话用户未声明版本）。
+- 插件启用：`~/.zcode/cli/config.json` 的 `enabledPlugins` 含 `zcode-dynamic-workflow@ultracode-for-zcode: true`；
+  `installed_plugins.json` 登记 version 0.1.5、installPath 与缓存目录精确一致、source git-subdir ref v0.1.5；
+  `known_marketplaces.json` 注册 ultracode-for-zcode；缓存下 4 个 marketplace 命名空间无冲突。
+- 缓存一致性：`diff -r` 缓存 vs 仓库源唯一差异为 README.md 文档性内容（发布后补录）；缓存与签名 tag
+  `v0.1.5` 字节级一致，`git tag -v` GPG 签名有效（2026-08-19）。plugin.json 合法 JSON，4 agent +
+  skill + command 与目录级声明一一对应，全部可读、零符号链接。
+- 版本敏感点：四 agent 硬编码模型 `builtin:zai-coding-plan/GLM-5.3` 在 WSL2 会话解析正常
+  （worker-fast/worker-review 活体派发成功）。
+
+### 探针记录
+
+| 探针 | 路由 | 结果 | 关键证据 |
+|---|---|---|---|
+| 仓库侧验收标准调查 | Explore | PASS | 定位 9 门 + 3 fix-seam 探针定义（docs/05:4,247-251,284；docs/08:434,496-498）；组件清单 1 skill + 1 command + 4 agents；全仓无 WSL 特定文档；历史回归均 Windows 宿主 |
+| 安装侧缓存检查 | Explore | PASS | 缓存树完整；plugin.json JSON 合法且组件一一对应；全可读、find -type l 零符号链接；installed/known_marketplaces/config 三处注册启用一致 |
+| 写入活性探针 | worker-fast | PASS | 创建 `.zcode/probes/wsl-write-probe.md`（标记行 + 6 项环境数据）→ 主 Agent cat 逐行核验一致 → 收尾删除，git status 确认工作树恢复 clean；worker RETURN 自证无 Bash 工具（S-11） |
+| 接线验收裁决 | worker-review | PASS（核心可用）/ FAIL（字面「完整可用」） | VERDICT：核心可用主张与 §15 比例化标准对齐、成立；「完整可用」因 standard/deep 零活体、F-05/07/09/13 未跑而不成立；reviewer 自证工具集恰为 Read/Glob/Grep（S-11 宿主强制活体确认）；指出 ~/.zcode 与 .zcode 证据对其不可达、属主 Agent 单源 |
+| 缓存完整性补验 | 主 Agent 直接 | PASS | diff -r 唯一差异 README.md；缓存 == tag v0.1.5 字节级一致；GPG 签名有效 |
+
+### 门覆盖映射
+
+- 活体覆盖：F-01（环境取证、diff/验签/清理等琐碎项主 Agent 直接完成）、F-02（Explore×2，file:line 证据、
+  零写操作）、F-12（4 次委派全为原子任务契约、零嵌套、主控权在主 Agent）、F-15（编排者模式三波执行与
+  主上下文卫生）、F-14 合规面（reviewer 遵守禁读 .zcode/~/.zcode 排除路径、零写痕迹）。
+- 未重跑：F-05/F-07/F-09/F-13 对抗性场景链；worker-standard/worker-deep 为注册确认 + 静态验证
+  （§15:566-567 先例：强行派发琐事违反本插件策略）。
+
+### 如实记录的局限
+
+- 宿主版本号未独立证实（见「环境与加载」）；本节活体证据属于「当前 WSL2 宿主」。
+- 「远程环境」（SSH/容器/远程开发）分支未测，为开放项；本节仅覆盖 WSL2。
+- 核心复验 ≠ 全量回归：如需按 docs/05 §5 重跑全部 9 门，参照 §14 载体与哨兵设计另行执行。
+- ~/.zcode 与 workspace .zcode 部分证据对 reviewer 不可达（其安全规则），属主 Agent 单源证据。
+- 本次为发布后文档补录：SHA256SUMS.txt 由主 Agent 按仓库惯例重新生成并全量校验（b16a4ab/§15 先例）；
+  已签名 v0.1.5 tag 内容不变。
+- worker-fast 探针的 Read 复查被宿主判为冗余调用（与 §15 相同现象），主 Agent 以独立读回复核闭环。
+
