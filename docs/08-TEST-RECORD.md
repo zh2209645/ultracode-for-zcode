@@ -2,7 +2,7 @@
 
 - 插件版本：0.1.5（2026-08-19 由 GPG 签名 tag `v0.1.5` 正式发布；§14 为 0.1.5 实跑强制回归，§15 为宿主 3.8.1 升级后核心功能复验；更早版本证据见各节）
 - 日期：2026-08-18
-- ZCode 版本：本机桌面版（§1–§14 各节当日为 3.7.7，用户确认；2026-08-19 宿主升级 3.8.1，升级后复验见 §15）
+- ZCode 版本：本机桌面版（§1–§14 各节当日为 3.7.7，用户确认；2026-08-19 宿主升级 3.8.1，升级后复验见 §15；2026-08-25 宿主升级 3.9.1，升级后复验见 §17）
 - 主 Agent 模型：`builtin:zai-coding-plan/GLM-5.3`
 - 测试方式说明：插件 Skill/Command/Agent 在会话启动时加载，行为测试当日的会话无法热加载插件包内
   worker。因此功能场景以「内置 subagent + worker 系统提示词全文作为委派 prompt」的替身
@@ -634,4 +634,46 @@ Explore / worker-fast / worker-review）与只读边界在 WSL2 下全部通过�
 - 本次为发布后文档补录：SHA256SUMS.txt 由主 Agent 按仓库惯例重新生成并全量校验（b16a4ab/§15 先例）；
   已签名 v0.1.5 tag 内容不变。
 - worker-fast 探针的 Read 复查被宿主判为冗余调用（与 §15 相同现象），主 Agent 以独立读回复核闭环。
+
+
+## 17. ZCode 3.9.1 升级后核心功能复验（2026-08-25）
+
+本节为宿主 3.8.1 → 3.9.1 更新后的比例化核心复验，沿用 §15/§16 模板，非 §14 全量行为回归的重跑；触发 TASKS.md 例行检查项「ZCode 发布新版本时复验核心链路」。载体为一次真实的 `/ultracode` 编排会话（三波任务图：静态取证 → 三档写 worker 活体探针 → 记录落盘）。结论：核心链路全部 PASS。
+
+> EN digest: Proportioned core re-verification after the 3.8.1 → 3.9.1 host update (§15/§16 template), carried by a real /ultracode orchestrator session. Skill mount, command invocation, registration, live dispatch of built-in Explore plus all four plugin worker tiers (fast/standard/deep/review), write/edit liveness, read-only boundaries, and release metadata all PASS. The official changelog confirms no plugin-facing surface changes in 3.8.1–3.9.1.
+
+### 环境与加载
+
+- 宿主版本：3.9.1（用户确认；`zcode` CLI 不在 Git Bash PATH，沿用 §15「宿主版本以用户确认为准」惯例）。官方 changelog（zcode.z.ai/en/changelog）：3.9.1（2026-08-25）含模型配置页、思考过程与耗时展示、部分网关图片显示与单冒号文件引用修复；3.8.1–3.9.1 区间未触及 plugins / skills / agents / subagents / marketplace / slash commands。
+- 插件启用：`C:\Users\qianp\.zcode\cli\config.json:7` enabledPlugins 含 `zcode-dynamic-workflow@ultracode-for-zcode: true`。
+- 安装注册：`installed_plugins.json:48-52` version 0.1.5、installPath 指向本缓存目录、source ref `v0.1.5`（:58-60）；`known_marketplaces.json:42-47` marketplace 在册。
+- 缓存一致性：缓存目录与仓库源 `diff -r` 唯一差异为 `plugins/zcode-dynamic-workflow/README.md`（仓库版为 tag 后补记回归通过与 3.8.1 复验的措辞更新，tag→HEAD 该文件差异 6+/5−）；SKILL.md、ultracode.md、四个 agent 定义、plugin.json 全部字节级一致，行为面零漂移。
+- 版本敏感点：三处版本号一致（plugin.json:3、marketplace.json:11/14、README.md:5 均 0.1.5，ref 固定 `v0.1.5`，worker-review 独立裁决 VERDICT pass）；四 agent 硬编码模型映射未变更，沿用 §14 验证结论。
+- Skill 挂载与命令：本节所在会话 Skill 从缓存 0.1.5 路径成功加载并返回全文；`/ultracode` 可调用并进入编排模式——本节即该会话的产出。
+- 发布物完整性：`sha256sum -c SHA256SUMS.txt` 发布物全 OK（plugins/ 10 文件、marketplace.json、docs、references）；仅根 AGENTS.md / TASKS.md 两处 FAILED，系 41a6e5c 维护模式转换晚于 SHA256SUMS 最后重生成（e41e943），属仓库维护文件的预期漂移而非发布物；本节收尾时按 b16a4ab/§15/§16 先例重新生成并全量复验。
+
+### 探针记录
+
+| 探针 | 路由 | 结果 | 关键证据 |
+| --- | --- | --- | --- |
+| 先例与场景定义调研 | Explore | PASS | 提取 §15/§16 模板、末节编号（§16→§17）、docs/05 九门定义与 3 探针、TASKS.md:16 例行项，全部带 file:line |
+| 发布元数据一致性裁决 | worker-review | PASS | VERDICT pass：三处版本一致；SHA256SUMS 与 plugins/ 10 文件精确一一对应；reviewer 自证仅用 Read/Glob、未触 .zcode/~/.zcode |
+| 写入活性（Write/Read） | worker-fast | PASS | `.tmp-dispatch-probe/probe-fast.md` 按合同创建；主 Agent `cat -A` 字节复核：4 行 + 末尾 LF、无 CR（99 字节） |
+| 写入与检索（Write/Glob/Grep） | worker-standard | PASS | probe-standard.md 创建（107 字节）；Glob 列出目录内 3 个探针文件；Grep 命中 `agent-tier` 行（:2） |
+| 写入与编辑（Write/Edit/Read） | worker-deep | PASS | probe-deep.md 创建后 Edit 将 `edit-marker: pending` 唯一替换为 `applied`；主 Agent 字节复核一致（105 字节） |
+| 静态完整性与安装侧取证 | 主 Agent 直接 | PASS | 版本三处 grep、sha256sum -c、diff -r 缓存比对、`git tag -v v0.1.5`（Good signature）、三处安装元数据 grep、git 状态取证（见「环境与加载」） |
+
+### 门覆盖映射
+
+- 活体覆盖：F-01（版本 grep、字节复核、清理等琐碎项主 Agent 直接完成，同 §16 口径）、F-02（Explore 只读调研，file:line 证据、零写操作）、F-12（本节全部委派（含本记录落盘共六次）均为原子任务契约、零嵌套派生，任务图与最终结论保留在主 Agent）、F-14 合规面（reviewer 工具仅 Read/Glob、禁读 .zcode/~/.zcode、verdict 经 subagent result 返回）、F-15（/ultracode 编排模式三波执行即本节载体，主上下文只保留结论与证据指针）。
+- 未重跑：F-05/F-07/F-09/F-13 对抗性场景链。
+- 与 §15/§16 口径的差异（有意扩展）：本节对 worker-standard / worker-deep 也做了活体派发探针（§15:566-567 与 §16:625-626 仅注册确认 + 静态验证）。判断依据：探针的受试对象是 3.9.1 的派发通道本身，探针负载由合同完全指定，不属于「为琐碎工作强行委派」；三档 RETURN 均确认正常接收并执行。
+
+### 如实记录的局限
+
+- 核心复验 ≠ 全量回归：如需按 docs/05 §5 重跑全部 9 门，参照 §14 载体与哨兵设计另行执行。
+- 宿主版本号未从 CLI 输出独立取证（不在 PATH），以用户确认为准；changelog 结论来自官方网页当日抓取。
+- `git tag -v v0.1.5` 本节已复跑：Good signature（EDDSA key 45D58FB03D43659F，ultimate 信任）；tag→HEAD 在 plugins/ 下唯一差异为 README.md（6+/5−，即上述缓存差异的来源），行为文件自 tag 以来零变更。缓存 == tag 的全目录字节级比对沿用 §16 结论，未重跑。
+- 三个探针合同中「五行」措辞与实际枚举四行不一致（主 Agent 合同撰写笔误），三个 worker 均按枚举内容执行并主动标记该不一致——符合「内容由合同完全指定」约束，结果不受影响。
+- 探针负载位于仓库根 `.tmp-dispatch-probe/`（3 个文件，.gitignore 覆盖不入库），验证后由主 Agent 删除；收尾时工作树仅余本节相关的预期文档变更。
 
