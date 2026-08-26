@@ -1,6 +1,6 @@
 {
   "name": "zcode-dynamic-workflow",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Lightweight dynamic delegation policy for ZCode primary agents",
   "author": {
     "name": "Local adaptation project"

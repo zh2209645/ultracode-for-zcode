@@ -2,7 +2,7 @@
 
 `zcode-dynamic-workflow` is a lightweight, native ZCode plugin for dependency-aware task delegation. It lets the primary Agent keep control of the overall goal while routing each atomic subtask to the lightest capable execution path.
 
-Current release: **v0.1.5** (published from the signed `v0.1.5` tag on 2026-08-19).
+Current release: **v0.2.0** (published from the signed `v0.2.0` tag on 2026-08-27).
 
 ## What it does
 
@@ -11,7 +11,8 @@ The plugin adds a dynamic workflow policy that helps the primary Agent:
 - size the whole request first and, once it exceeds reading or modifying a few files, plan a dynamic workflow before touching any file;
 - keep its own context clean — goals, task graph, decisions, and verified conclusions instead of raw file bodies and exploration noise;
 - complete trivial work directly instead of delegating it;
-- use ZCode's built-in `Explore` agent for read-only discovery and evidence gathering;
+- use `explore-flash` (glm-5.3-flash) for low-to-medium difficulty read-only exploration at lower cost;
+- use ZCode's built-in `Explore` agent for high-difficulty or broad read-only discovery;
 - use `worker-fast` for simple, mechanical, low-risk changes;
 - use `worker-standard` for normal implementation and test work;
 - use `worker-deep` for clearly scoped, high-complexity file changes;
@@ -27,13 +28,14 @@ The primary Agent is always the sole orchestrator. Workers receive atomic task c
 | Work type | Default path |
 |---|---|
 | Trivial, local, low-risk change | Primary Agent |
-| Read-only repository exploration | Built-in `Explore` |
+| Low/medium read-only exploration | `explore-flash` |
+| High-difficulty or broad exploration | Built-in `Explore` |
 | High-risk independent review or adjudication | `worker-review` |
 | Simple, mechanical file change | `worker-fast` |
 | Standard implementation or tests | `worker-standard` |
 | Complex, cross-module, or high-risk file change | `worker-deep` |
 
-Write tasks are scored by scope, ambiguity, coupling, risk, and verification cost. Task type overrides the score: discovery stays with `Explore`, ordinary analysis stays with the primary Agent, and high-assurance independent review goes to `worker-review`.
+Write tasks are scored by scope, ambiguity, coupling, risk, and verification cost. Task type overrides the score: low/medium discovery goes to `explore-flash`, high-difficulty or broad discovery to built-in `Explore`, ordinary analysis stays with the primary Agent, and high-assurance independent review goes to `worker-review`.
 
 ## Components
 
@@ -46,6 +48,7 @@ plugins/zcode-dynamic-workflow/
 ├── commands/ultracode.md
 ├── skills/dynamic-workflow/SKILL.md
 ├── agents/
+│   ├── explore-flash.md
 │   ├── worker-fast.md
 │   ├── worker-standard.md
 │   ├── worker-deep.md
@@ -59,6 +62,7 @@ It adds:
 
 - the `/ultracode` command;
 - the `dynamic-workflow` skill;
+- a low-cost read-only explorer (`explore-flash`);
 - three write-capable worker tiers;
 - one read-only reviewer.
 
@@ -76,7 +80,7 @@ It does **not** add hooks, MCP servers, a Node/Python/TypeScript runtime, persis
 3. Install and enable `zcode-dynamic-workflow`.
 4. Start a new ZCode session so the command, skill, and agents are loaded.
 
-The marketplace source is pinned to the signed `v0.1.5` release tag.
+The marketplace source is pinned to the signed `v0.2.0` release tag.
 
 ## Usage
 
@@ -90,22 +94,23 @@ For small tasks, no special command is needed—the policy intentionally avoids 
 
 ## Model mapping
 
-The published package uses one verified model with different reasoning levels:
+The working tree uses a hybrid mapping (2026-08-27):
 
 | Agent | Model | Thought level | Max turns |
 |---|---|---:|---:|
-| `worker-fast` | `builtin:zai-coding-plan/GLM-5.3` | `low` | 12 |
-| `worker-standard` | `builtin:zai-coding-plan/GLM-5.3` | `high` | 24 |
+| `explore-flash` | `builtin:zai-coding-plan/glm-5.3-flash` | `low` | 16 |
+| `worker-fast` | `builtin:zai-coding-plan/glm-5.3-flash` | `high` | 12 |
+| `worker-standard` | `builtin:zai-coding-plan/glm-5.3-flash` | `max` | 24 |
 | `worker-deep` | `builtin:zai-coding-plan/GLM-5.3` | `max` | 36 |
 | `worker-review` | `builtin:zai-coding-plan/GLM-5.3` | `max` | 30 |
 
-Model availability is machine-specific. If your ZCode installation uses another provider, update the four agent frontmatter entries as described in [MODEL-MAPPING.md](plugins/zcode-dynamic-workflow/MODEL-MAPPING.md).
+Model availability is machine-specific. If your ZCode installation uses another provider, update the five agent frontmatter entries as described in [MODEL-MAPPING.md](plugins/zcode-dynamic-workflow/MODEL-MAPPING.md).
 
 ## Security boundaries
 
-- All four agents set `injectAgentsMd: false`.
+- All five agents set `injectAgentsMd: false`.
 - Write workers allow only `Read`, `Edit`, `Write`, `Glob`, and `Grep`.
-- `worker-review` allows only `Read`, `Glob`, and `Grep`.
+- `worker-review` and `explore-flash` allow only `Read`, `Glob`, and `Grep`.
 - Workers have no shell, web, or MCP tools.
 - Command execution, network access, and final test/build verification remain with the primary Agent.
 - Write-capable workers should run under ZCode **Confirm Before Changes** or an equivalent restricted workspace mode, never unrestricted access in an untrusted repository.

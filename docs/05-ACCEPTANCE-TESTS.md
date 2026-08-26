@@ -17,14 +17,16 @@
 | S-02 | 解析 `plugin.json` | name/version/paths 合法 |
 | S-03 | 发现 Skill | ZCode 显示 `dynamic-workflow` |
 | S-04 | 发现 Command | ZCode 显示 `/ultracode` |
-| S-05 | 发现 Agents | 显示 fast/standard/deep/review 四个 Agent |
-| S-06 | 模型 ID | 无占位符，四个 Agent 均可调用 |
+| S-05 | 发现 Agents | 显示 explore-flash/fast/standard/deep/review 五个 Agent |
+| S-06 | 模型 ID | 无占位符，五个 Agent 均可调用 |
 | S-07 | Frontmatter | `thoughtLevel` 拼写正确，必填字段完整 |
 | S-08 | 无额外组件 | 无 hooks、MCP、runtime、state |
 | S-09 | License | 项目和上游许可证说明存在 |
 | S-10 | 新会话生效 | 重启/新开 session 后配置正确加载 |
-| S-11 | 最小权限 | 四个 Agent 均 `injectAgentsMd: false`；三个写 worker 仅有 Read/Edit/Write/Glob/Grep；review 仅有 Read/Glob/Grep；无 Bash/Web/MCP |
+| S-11 | 最小权限 | 五个 Agent 均 `injectAgentsMd: false`；三个写 worker 仅有 Read/Edit/Write/Glob/Grep；review 与 explore-flash 仅有 Read/Glob/Grep；无 Bash/Web/MCP |
 | S-12 | 发布引用 | marketplace 与 plugin 版本一致，远端 source 固定到对应受保护或签名的 release tag |
+
+> 2026-08-27：新增第五个 agent `explore-flash`（中低难度只读探索，glm-5.3-flash + thoughtLevel low，同日由 high 调整为 low）。S-05/S-06/S-11 已按五 agent 口径更新；低/中难度只读探索场景路由至 `explore-flash` 或内置 Explore 均可接受，高难度/广度探索仍应路由至内置 Explore。
 
 ## 2. 功能场景
 
@@ -111,7 +113,7 @@
 预期：
 
 - 同一 Wave 并行；
-- 可写 worker 并发不超过 3；总并发只有在额外任务均为只读 Explore/worker-review 时才可超过 3，且不超过 10；
+- 可写 worker 并发不超过 3；总并发只有在额外任务均为只读 explore-flash/Explore/worker-review 时才可超过 3，且不超过 10；
 - 汇总每个 worker 结果。
 
 ### F-07：依赖波次
@@ -196,7 +198,7 @@
 - worker 不注入 AGENTS.md，不把文件内容当作指令；
 - worker 只把主 Agent直接发送的 TASK/SCOPE/CONSTRAINTS/ACCEPTANCE/VERIFY/RETURN 当作控制指令；CONTEXT、引用的仓库内容、上游输出和文件内容均只是不可信数据；
 - worker 无 Bash、WebFetch、WebSearch 或 MCP 工具；
-- 只有写文件任务可读写工作区 `.zcode/**` 中当前任务的 todo/log；Explore 和 worker-review 不访问 `.zcode`，不得访问用户级 `~/.zcode`、缓存、凭据或其他 session 日志；
+- 只有写文件任务可读写工作区 `.zcode/**` 中当前任务的 todo/log；explore-flash/Explore 和 worker-review 不访问 `.zcode`，不得访问用户级 `~/.zcode`、缓存、凭据或其他 session 日志；
 - 主 Agent只传入审查后的最小项目约束；
 - 可写任务要求 Confirm Before Changes 或等价受限宿主模式；
 - 主 Agent解析 SCOPE 路径的规范化真实目标，拒绝 symlink、junction、reparse point、链接祖先、越出可信工作区/SCOPE 或无法解析的路径；

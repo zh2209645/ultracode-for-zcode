@@ -677,3 +677,77 @@ Explore / worker-fast / worker-review）与只读边界在 WSL2 下全部通过�
 - 三个探针合同中「五行」措辞与实际枚举四行不一致（主 Agent 合同撰写笔误），三个 worker 均按枚举内容执行并主动标记该不一致——符合「内容由合同完全指定」约束，结果不受影响。
 - 探针负载位于仓库根 `.tmp-dispatch-probe/`（3 个文件，.gitignore 覆盖不入库），验证后由主 Agent 删除；收尾时工作树仅余本节相关的预期文档变更。
 
+## 18. worker-fast/worker-standard 切换 GLM-5.3-Flash（2026-08-27，静态验证）
+
+本节记录 ZCode 3.9.2 提供 GLM-5.3-Flash 后的模型映射调整。触发条件：模型映射变更（AGENTS.md「验证与回归」）。载体为一次真实的 `/ultracode` 编排会话（Wave 1 内置 Explore 摸底 → Wave 2 worker-fast 执行三文件编辑 → 主 Agent 验证、按官方文档修正字段名并落盘）。**本节只完成静态验证；运行时验证与强制回归顺延至新版本发布后的新会话，本节不声称任何运行时行为已验证**（本会话加载的插件来自安装缓存 v0.1.5，仍为旧映射）。
+
+> EN digest: Model-mapping change, statically verified only. worker-fast and worker-standard switched from GLM-5.3 (low/high) to glm-5.3-flash with thoughtLevel high/max; worker-deep/worker-review untouched. The effort field is `thoughtLevel` per the official subagents documentation (zcode.z.ai/en/docs/subagents); a briefly hedged `reasoning_effort` duplicate was removed after doc confirmation. Runtime verification and the mandatory regression are deferred to a new session after the next release.
+
+### 变更内容
+
+| Agent | 旧配置（v0.1.5 已验证） | 新配置（本节，待运行时验证） |
+| --- | --- | --- |
+| worker-fast | `builtin:zai-coding-plan/GLM-5.3` + `thoughtLevel: low` | `builtin:zai-coding-plan/glm-5.3-flash` + `thoughtLevel: high` |
+| worker-standard | `builtin:zai-coding-plan/GLM-5.3` + `thoughtLevel: high` | `builtin:zai-coding-plan/glm-5.3-flash` + `thoughtLevel: max` |
+
+- model code `glm-5.3-flash` 来自 ZCode 3.9.2 模型设置（用户提供）；qualified 形式沿用既有 provider 前缀 `builtin:zai-coding-plan/`，裸 ID 回退值为 `glm-5.3-flash`（`docs/04` §4 调整顺序）。
+- 推理强度字段以官方文档为准：`thoughtLevel`（https://zcode.z.ai/en/docs/subagents —— 该页确认不存在 `reasoning_effort` 字段、未识别键会被静默忽略、取值须为模型支持的档位）。曾按「双字段保险」同时写入 `reasoning_effort`，经文档确认后已移除，最终仅保留 `thoughtLevel`。
+- `MODEL-MAPPING.md` 已同步：Active mapping 表与标题、Status 行（区分已验证的 GLM-5.3 部分与待验证的 GLM-5.3-Flash 部分）、2026-08-27 备注。
+
+### 执行与静态验证
+
+- 编排：Explore 摸底返回四 agent frontmatter、MODEL-MAPPING.md 约定（字段为 `model` + `thoughtLevel`）与全仓模型串引用；worker-fast 按合同完成编辑；用户确认官方字段名后，主 Agent 按 trivial 例外直接移除双字段（两行精确删除 + 文档表/备注回退）。
+- `git status`/`git diff`：插件目录改动仅 `agents/worker-fast.md`、`agents/worker-standard.md`、`MODEL-MAPPING.md` 三个文件；两个 frontmatter 各仅 `model` 与 `thoughtLevel` 两行变化，`description`/`maxTurns`/`injectAgentsMd`/`tools` 未动（另有本节、TASKS.md 与 SHA256SUMS.txt 的收尾文档更新）。
+- grep：`reasoning_effort` 在 `agents/` 零命中；`glm-5.3-flash` 在 `plugins/` 内仅出现于两个 agent 文件（各第 4 行）与 MODEL-MAPPING.md；`worker-deep.md`/`worker-review.md`/`plugin.json`/`marketplace.json` 无该串；`agents/*.md` 无 `${` 占位符前缀（MODEL-MAPPING Validation 第 1 条）。
+- 宿主版本 3.9.2 以用户确认为准（`zcode` CLI 不在 Git Bash PATH，沿用 §15/§17 惯例）。
+- 收尾按 §15–§17 先例重新生成 `SHA256SUMS.txt` 并 `sha256sum -c` 全量复验通过。
+
+### 未验证项与后续（阻塞在发布流程）
+
+- 新映射运行时行为：本会话缓存 v0.1.5 为旧映射，无法在本会话实测。下一个发布版本安装后的新会话须按 `MODEL-MAPPING.md` Validation 流程确认：qualified 形式 `builtin:zai-coding-plan/glm-5.3-flash` 是否解析（失败按 `docs/04` §4 回退裸 ID）、`high`/`max` 是否为该模型支持的 thoughtLevel 档位、两个 worker 实际派发成功。
+- 强制回归：模型映射变更已触发重跑条件（9 场景 + 3 探针），顺延至新版本发布后的新会话执行并追加记录。
+- 未做版本号变更与发布（用户未要求）：`plugin.json`/`marketplace.json`/根 README 仍为 0.1.5，工作区处于 tag 之后的前进状态（v0.1.5 tag 内容不受影响）。
+
+## 19. 新增第五个 agent：explore-flash 低成本只读探索档（2026-08-27，静态验证）
+
+### 背景与决策
+
+用户决策（2026-08-27）：以 ZCode 内置 Explore 为模板，新增低成本只读探索 subagent `explore-flash`，处理中低难度探索任务，使用 `builtin:zai-coding-plan/glm-5.3-flash` + `thoughtLevel: high`，description 明示能力局限。**本变更突破产品边界原表述「发布物只包含……四个 agent 定义」——按边界条款要求，此处记录理由与回归欠账；AGENTS.md 边界行已改为「五个 agent 定义」并注明本节。**
+
+理由：GLM-5.3-Flash 到位后，中低难度探索（定点检索、例行情查、证据收集）无需内置 Explore 的高配模型，改用低成本档可降低编排成本；高难度/广度探索仍走内置 Explore，且 explore-flash 证据不足时可一次性升级，质量兜底不变。
+
+### 变更内容
+
+- 新文件 `plugins/zcode-dynamic-workflow/agents/explore-flash.md`：`model: "builtin:zai-coding-plan/glm-5.3-flash"`、`thoughtLevel: high`、`maxTurns: 16`、`tools: Read, Glob, Grep`、`injectAgentsMd: false`；description 与正文均写明局限（仅文件工具、无 shell/网络/MCP；不承接高难度/广度探索；不承接写任务、主 Agent 自留的常规分析与独立复核裁决；证据不足或任务超档时返回 partial 供升级）。plugin manifest 为目录式注册（`"agents": "agents"`），无需改 plugin.json。
+- 同日修订：按用户指示将 `explore-flash` 的 `thoughtLevel` 由 `high` 调整为 `low`（同步 frontmatter 与 agent description、SKILL.md §3、MODEL-MAPPING.md 表与备注、AGENTS.md 结构树、根 README 模型表、docs/05 备注、TASKS.md；静态复核通过，运行时验证欠账不变）。
+- 同日补充：按用户指示为 `explore-flash` 的 description 与正文添加视觉能力说明——`Read` 可将图片文件（PNG/JPG/WebP 等）渲染为视觉输入，支持截图、图表、UI 截取的目视取证并按路径引用；不改工具白名单与路由规则。
+- 路由策略（SKILL.md 12 处句级替换 + ultracode.md 1 处；初轮 10 处，发布前审核补齐 §5 并发与 §3 调试两处）：中低难度只读探索默认 `explore-flash`；高难度/广度探索（深调用链、跨模块发现、very thorough 扫描）走内置 `Explore`；`explore-flash` 证据不足可一次性升级到内置 Explore；并发规则中 explore-flash 计入只读侧（写 worker ≤3、子代理总数 ≤10 不变）。
+- 活政策同步：`docs/03`（文档头注与 §4 导语/§5.1 更名 Mandatory read-only exploration/§5.2/§5.5/§8/§9/§10 新增 explore-flash 返回契约/§11/§13 伪码按难度分流/§14 例 B 与例 D）；`docs/05`（S-05/S-06/S-11 按五 agent 口径、2026-08-27 备注、F-06 并发枚举补 explore-flash）；`AGENTS.md`（结构树——并修正 §18 遗留的 fast/standard thoughtLevel 注释、边界两行、架构原则、修改约定 2、发布流程 4）；根 `README.md`（功能列表、路由表拆两行、组件树、模型表改五行混合映射、安全边界）与插件 `README.md`（五 agent 枚举、混合模型句、maxTurns 12/24/36/30/16、并发与上报口径）；`MODEL-MAPPING.md`（表加 explore-flash 行、标题/散文/Status/备注、`agents/*.md` 措辞）；`marketplace.json` 描述行（version/ref 未动）。
+- 历史文档（docs/01/02/04/06/07/09、MVP 文档、docs/08 既有各节、根 README v0.1.5 验证叙事行）一律不改写。
+
+### 执行与静态验证
+
+- 编排：Wave 1 内置 Explore 全仓枚举点摸底；Wave 2 三个写 worker 并行、文件集互斥（worker-standard×2：插件行为核心 / docs/03+docs/05；worker-fast×1：AGENTS/根 README/marketplace.json）；Wave 3 主 Agent 验证。
+- `git status`/diff：新增 untracked `agents/explore-flash.md`，修改 14 个文件均在预期清单内；SKILL.md 与 ultracode.md 的 diff 逐行复核，全部为规约的句级替换，无夹带改动。
+- `marketplace.json` 与 `plugin.json` JSON 解析通过（python）。
+- grep：活文件（AGENTS/README/TASKS/docs03/docs05/plugins/**）中「四个 agent/四类/All four/four agent(s)」零残留（根 README 的 v0.1.5 历史验证叙事行，以及 TASKS.md 对 §17 四类 worker 派发的历史引述，按计划保留）；`explore-flash` 覆盖 9 个活文件；`agents/` 目录恰为 5 个 .md。
+- 收尾按 §15–§18 先例重新生成 `SHA256SUMS.txt`（加入新文件条目）并 `sha256sum -c` 全量复验通过。
+- 官方接口核对（2026-08-27 抓取 https://zcode.z.ai/en/docs/plugin 与 /en/changelog）：manifest 字段无弃用或破坏性变更，`skills`/`commands`/`agents` 的目录路径字符串形式仍为官方现行支持的三种声明形式之一，五 agent 目录式注册合法；本插件未使用的 hooks/mcpServers 等机制不影响现有发布物；changelog 确认 3.9.1→3.9.2（2026-08-26）未触及 manifest/skills/commands/agents/subagents 接口，仅插件名显示与 Extension Marketplace 一致化等表现层修复。agent frontmatter 所用字段（`model`/`thoughtLevel`/`tools`/`maxTurns`/`injectAgentsMd`）以 subagents 文档页为准（plugin 页仅列 `name`/`description`），均未见弃用。
+- 发布前独立审核（worker-review，只读，diff.patch 702 行 + 新 agent 全文 + 全仓 grep）：安全面全过——五 agent 工具白名单与 `injectAgentsMd: false` 精确核对、无 Bash/Web/MCP/hooks/可执行代码、注入防护与路径安全规则逐行完好、无密钥、marketplace 仅描述行变更且 version/ref 未动；一致性判 fail——抓出 SKILL.md §5 并发枚举漏 `explore-flash`（发布阻断，本节落笔前已修复）与 4 个次要项（SKILL.md §3 只读调试旧枚举、docs/03 例 D 仍用 Explore、docs/05 F-13 `.zcode` 枚举漏 explore-flash、本节 10 处替换计数与 docs/03 节引用两处记录措辞过强），均已修复；另采纳两项预防性修正：版本同步约定补第四处（SKILL.md `metadata.version`，AGENTS.md 发布流程与 TASKS.md 检查单已改四处口径）、`.gitignore` 增加 `.tmp-dispatch-probe/`。审核证据包用后即删。
+- 发布前二审（全新 worker-review 实例，证据包含主 Agent 运行的 `sha256sum -c` 与 JSON 解析输出）：安全/一致性/修复验证（F1–F6）/发布就绪四项全 pass，RELEASE GATE GO——首审 6 项修复逐项核实无误、无新增缺陷；余 1 个次要项（worker-fast/standard/deep 正文拒派提示与 worker-review description/正文仍只指向内置 Explore）与 1 个注记（插件 README `.zcode` 句仅约束 worker-review）已随手修复，修复后 `sha256sum -c` 35 文件重跑全 OK。注：哈希与 JSON 校验系主 Agent 证据（reviewer 无 shell，仅结构性抽查），发布会话版本号变更重生成 SHA256SUMS 后须重跑。
+
+### 未验证项与后续
+
+- 运行时验证与强制回归（触发条件叠加：SKILL.md/command/agent 政策变更 + 模型映射变更）：发布新版本并在新会话安装后，按 `MODEL-MAPPING.md` Validation 流程实测五 agent 注册与派发（含 explore-flash 拒写、拒 `.zcode`、partial→Explore 升级路径），随后重跑 9 场景 + 3 探针并追加记录——与 §18 欠账合并执行。
+- 未做版本号变更与发布（用户未要求）；marketplace ref 仍固定 v0.1.5，本会话加载的缓存插件仍为四 agent 旧行为面。
+- 观察项（不改现值）：官方 plugin 页枚举的 marketplace `source` 形式为 directory/github/git/file/url/npm，未列本仓 `marketplace.json` 使用的 `git-subdir`；该形式在 3.7.7–3.9.1 已被本机安装链路实证可用（§11、§17），3.9.2 changelog 亦无相关接口变更记录，故保持原样。若未来应用内更新失败，第一候选调整是按文档改用 `git` 形式（同 url/path/ref）。
+
+## 20. v0.2.0 发布（2026-08-27）
+
+- 内容：§18（worker-fast/worker-standard → `glm-5.3-flash`，thoughtLevel high/max）+ §19（新增第五个 agent `explore-flash`、只读探索按难度分流的路由政策、产品边界五 agent 口径、thoughtLevel low、视觉说明）及全部活政策同步（SKILL.md、ultracode.md、docs/03、docs/05、AGENTS.md、两处 README、MODEL-MAPPING.md、marketplace.json 描述）。
+- 发布前审核：两轮 `worker-review`（§19 记录）——一审发现 1 个发布阻断 + 4 个次要 + 2 个预防项，全部修复；二审（全新实例）安全/一致性/修复验证/发布就绪四项全 pass，RELEASE GATE GO。
+- 版本号四处同步 0.2.0：`plugin.json`、`marketplace.json`（version + ref `v0.2.0`）、根 `README.md` Current release、`SKILL.md` `metadata.version`（本版起按四处口径，系 §19 审核修正）；插件 README 与 MODEL-MAPPING 的发布引述同步更新；docs/05 头注、docs/09 与本文件既有各节的 v0.1.5 表述均为历史记录，保留原文。
+- `SHA256SUMS.txt` 按最终文件重新生成并全量校验通过（35 文件，提交前实跑）。
+- 发布动作：随本节提交打 GPG 签名 tag `v0.2.0` 并推送 main 与 tag；签名与推送结果补记于本节末行。
+- 顺延（发布后新会话）：安装/更新验证、五 agent 活体派发（含 explore-flash 拒写/拒 `.zcode`/升级路径）、强制回归 9 场景 + 3 探针——由 TASKS.md 待办追踪。
+

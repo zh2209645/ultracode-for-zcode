@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-`zcode-dynamic-workflow` 是一个纯声明式 ZCode 插件（JSON + Markdown，无任何可执行代码），为 ZCode 主 Agent 提供动态任务拆分与委派策略。MVP 已于 2026-08-18 完成，插件效果评估全部通过。当前发布版本 **v0.1.5**（2026-08-19，GPG 签名 tag），marketplace ref 已固定到该 tag。项目处于维护期。
+`zcode-dynamic-workflow` 是一个纯声明式 ZCode 插件（JSON + Markdown，无任何可执行代码），为 ZCode 主 Agent 提供动态任务拆分与委派策略。MVP 已于 2026-08-18 完成，插件效果评估全部通过。当前发布版本 **v0.2.0**（2026-08-27，GPG 签名 tag），marketplace ref 已固定到该 tag。项目处于维护期。
 
 ## 仓库结构
 
@@ -13,8 +13,9 @@ plugins/zcode-dynamic-workflow/   插件发布目录
 ├── .zcode-plugin/plugin.json     插件 manifest（版本号在此维护）
 ├── commands/ultracode.md         /ultracode 编排模式命令
 ├── skills/dynamic-workflow/SKILL.md  动态拆解与路由规则（行为核心）
-├── agents/worker-fast.md         低难度写任务（thoughtLevel: low）
-├── agents/worker-standard.md     常规写任务（thoughtLevel: high）
+├── agents/explore-flash.md       中低难度只读探索（glm-5.3-flash，thoughtLevel: low）
+├── agents/worker-fast.md         低难度写任务（glm-5.3-flash，thoughtLevel: high）
+├── agents/worker-standard.md     常规写任务（glm-5.3-flash，thoughtLevel: max）
 ├── agents/worker-deep.md         高难度写任务（thoughtLevel: max）
 ├── agents/worker-review.md       只读高风险复核（thoughtLevel: max）
 ├── MODEL-MAPPING.md              模型映射与更换流程
@@ -42,15 +43,15 @@ TASKS.md                          维护任务清单（待办与例行检查）
 - 不引入 Hook、MCP server、Node/TypeScript/Python 运行时或持久状态；
 - 不引入 Team/swarm/mailbox/heartbeat、Ralph 循环、HUD、自动 worktree 管理、多供应商 CLI 调度；
 - 不允许 subagent 再派生 subagent；
-- 发布物只包含 plugin manifest、一个 Skill、一个 command、四个 agent 定义和说明文档；
-- 四个 agent 均设置 `injectAgentsMd: false`；写 worker 工具白名单为 Read/Edit/Write/Glob/Grep，reviewer 为 Read/Glob/Grep，均无 shell、网络和 MCP 工具。
+- 发布物只包含 plugin manifest、一个 Skill、一个 command、五个 agent 定义和说明文档（2026-08-27 经用户决策新增 explore-flash 低成本只读探索档，见 docs/08 §19）；
+- 五个 agent 均设置 `injectAgentsMd: false`；写 worker 工具白名单为 Read/Edit/Write/Glob/Grep，reviewer 与 explore-flash 为 Read/Glob/Grep，均无 shell、网络和 MCP 工具。
 
 ## 架构原则
 
 - **主 Agent 是唯一 orchestrator，保留任务图、依赖关系、结果整合和最终结论。**
 - **subagent 只完成被分配的原子任务，不重新定义总目标。**
 - **不为简单任务委派；不把有依赖的任务伪装成并行任务。**
-- **探索走内置 `Explore`，高风险独立复核走 `worker-review`，一般分析两者都不用。**
+- **中低难度探索走 `explore-flash`（低成本），高难度或广度探索走内置 `Explore`，高风险独立复核走 `worker-review`，一般分析三者都不用。**
 - **只使用 ZCode 已文档化的原生能力，不发明新的工具调用语法。**
 - **提示词保持短而明确。**
 - **没有证据时不声称验证通过。**
@@ -58,7 +59,7 @@ TASKS.md                          维护任务清单（待办与例行检查）
 ## 修改约定
 
 1. 行为问题优先通过调整 `SKILL.md` 和 agent `description` 解决，不新增代码层或新文件类型。
-2. 更换模型时按 `MODEL-MAPPING.md` 的流程修改四个 agent frontmatter，并在新会话逐一实测确认生效。
+2. 更换模型时按 `MODEL-MAPPING.md` 的流程修改五个 agent frontmatter，并在新会话逐一实测确认生效。
 3. 改动政策或模型后必须重跑回归（见下节），证据追加到 `docs/08-TEST-RECORD.md` 对应小节。
 4. 同步维护 `TASKS.md`：新发现的改进项和例行检查结果记录在那里。
 
@@ -71,10 +72,10 @@ TASKS.md                          维护任务清单（待办与例行检查）
 
 ## 发布流程
 
-1. 同步三处版本号：`plugins/zcode-dynamic-workflow/.zcode-plugin/plugin.json`、`marketplace.json`（`version` 与 `ref`）、根 `README.md` 的 "Current release"。
+1. 同步四处版本号：`plugins/zcode-dynamic-workflow/.zcode-plugin/plugin.json`、`marketplace.json`（`version` 与 `ref`）、根 `README.md` 的 "Current release"、`plugins/zcode-dynamic-workflow/skills/dynamic-workflow/SKILL.md` 的 `metadata.version`。
 2. 重新生成 `SHA256SUMS.txt`。
 3. 推送 main 后打 GPG 签名 tag（`git tag -s vX.Y.Z`）并推送，marketplace `ref` 固定到新 tag。
-4. 在新会话安装/更新，验证 Skill 加载、`/ultracode` 可调用、四类 agent 可实际派发。
+4. 在新会话安装/更新，验证 Skill 加载、`/ultracode` 可调用、五类 agent 可实际派发。
 5. 回滚策略见 `docs/04-MIGRATION-PLAN.md` §9。
 
 ## 许可证

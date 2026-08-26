@@ -1,26 +1,44 @@
 # Model Mapping
 
-Status: **configured and verified** (2026-08-19). The four Agent files use real model IDs
-and were all exercised in the v0.1.3 regression session (docs/08 §11). Release `v0.1.5` is
-published as a GPG-signed tag with the marketplace ref pinned to it; the
-in-app GitHub update path was proven at v0.1.3.
+Status: **GLM-5.3 mapping configured and verified (2026-08-19, docs/08 §11); the
+GLM-5.3-Flash remap of worker-fast/worker-standard and the new `explore-flash`
+agent (2026-08-27) are configured but pending the new-session verification
+described in Validation.** Release `v0.2.0` is published as a GPG-signed tag with
+the marketplace ref pinned to it; the in-app GitHub update path was proven at
+v0.1.3.
 
-## Active mapping (Option B — one model, three effort levels)
+## Active mapping (hybrid — GLM-5.3-Flash for explore-flash/fast/standard, GLM-5.3 for deep/review)
 
 | Agent | model | thoughtLevel | maxTurns |
 |---|---|---|---|
-| worker-fast | `builtin:zai-coding-plan/GLM-5.3` | `low` | 12 |
-| worker-standard | `builtin:zai-coding-plan/GLM-5.3` | `high` | 24 |
+| worker-fast | `builtin:zai-coding-plan/glm-5.3-flash` | `high` | 12 |
+| worker-standard | `builtin:zai-coding-plan/glm-5.3-flash` | `max` | 24 |
 | worker-deep | `builtin:zai-coding-plan/GLM-5.3` | `max` | 36 |
 | worker-review | `builtin:zai-coding-plan/GLM-5.3` | `max` | 30 |
+| explore-flash | `builtin:zai-coding-plan/glm-5.3-flash` | `low` | 16 |
 
 The active provider on this machine is `builtin:zai-coding-plan` (Z.ai Coding Plan,
 the only provider marked `available` in the local coding-plan cache). `GLM-5.3`
 supports the reasoning levels `low`, `high`, and `max` according to the local model
 registry, and the runtime logs show the qualified form
-`builtin:zai-coding-plan/GLM-5.3` as the canonical model reference. Using one model
-with three effort levels creates the fast/standard/deep tiers without depending on
-multiple providers.
+`builtin:zai-coding-plan/GLM-5.3` as the canonical model reference. The mapping now uses two models from that same provider: `GLM-5.3-Flash` for the
+explore-flash/fast/standard tiers and `GLM-5.3` for the deep/review tiers.
+
+2026-08-27: ZCode 3.9.2 provides GLM-5.3-Flash (model code `glm-5.3-flash`, from
+ZCode model settings); the qualified form reuses the same `builtin:zai-coding-plan`
+provider prefix, and the bare-ID fallback per the documented adjustment order is
+`glm-5.3-flash`. The reasoning-effort field is `thoughtLevel` per the official
+subagents documentation (https://zcode.z.ai/en/docs/subagents): no `reasoning_effort`
+field exists, and unrecognized frontmatter keys are silently ignored, so only
+`thoughtLevel` is written. Pending new-session verification: that the qualified form
+resolves and that `low`/`high`/`max` are effort levels this model supports.
+
+Also on 2026-08-27: added `explore-flash`, a fifth agent modeled on the built-in
+Explore role for low-to-medium difficulty read-only exploration at lower cost
+(`glm-5.3-flash`, `thoughtLevel: low` — adjusted from `high` the same day by user
+decision, `maxTurns` 16, tools Read/Glob/Grep, no
+shell/network/MCP). High-difficulty or broad exploration stays with built-in
+`Explore`, with one-step escalation from `explore-flash`.
 
 ## Alternative mappings
 
@@ -41,7 +59,7 @@ mapping that is fully evidenced.
 ### Changing the mapping on another machine
 
 1. Open ZCode model settings and copy the real model IDs (not display names).
-2. Edit all `agents/worker-*.md` frontmatter: `model` and a supported `thoughtLevel`.
+2. Edit all `agents/*.md` frontmatter: `model` and a supported `thoughtLevel`.
 3. Remember: a subagent `thoughtLevel` only takes effect when `model` names a
    specific model; `model: inherit` follows the primary Agent and ignores it.
 4. Start a new ZCode session so the changes load.
