@@ -752,3 +752,49 @@ Explore / worker-fast / worker-review）与只读边界在 WSL2 下全部通过�
 - 签名与推送结果（发布提交后实跑）：`git tag -v v0.2.0` Good signature（EDDSA key `45D58FB03D43659F`，ultimate 信任；tag → cd51a00）；main 推送 `6c73a54..cd51a00`，tag 已推送且 `git ls-remote` 确认远端 `refs/tags/v0.2.0` → cd51a00。本行与 TASKS.md 里程碑随收口提交补录，先例同 b16a4ab。
 - 顺延（发布后新会话）：安装/更新验证、五 agent 活体派发（含 explore-flash 拒写/拒 `.zcode`/升级路径）、强制回归 9 场景 + 3 探针——由 TASKS.md 待办追踪。
 
+## 21. v0.2.0 × ZCode 3.9.2 全量验证（2026-08-27，发布后新会话）
+
+> EN digest: Post-release new-session comprehensive verification of plugin v0.2.0 on host ZCode 3.9.2, discharging the runtime debts deferred by §18/§19/§20. Install/update chain verified end-to-end (marketplace ref v0.2.0 signed tag -> cache 0.2.0 byte-identical -> enabled -> skill mount -> /ultracode invoked by user). All five agents live-dispatched with structured returns: explore-flash x5 (incl. refuse-write / refuse-.zcode probes and a 32-file exhaustive sweep), worker-fast x5 (incl. live prompt-injection defense), worker-standard x3, worker-deep x1, worker-review x2 (fail-twice adjudication + final acceptance verdict PASS-with-conditions). Nine mandatory gates covered; fix-seam probes (i)/(ii) live, (iii) executed as this very write task. Host 3.9.1->3.9.2 changelog touches the plugin surface display-only (plugin-name rendering); no adaptation required. Named runtime gap: flash-partial->Explore escalation trigger never arose; policy-verified only.
+
+### 环境与加载
+
+- 宿主：ZCode 3.9.2（用户确认；官方 changelog 3.9.2 发布于 2026-08-26 佐证；CLI 不在 PATH 无法 `--version` 直证——与 §17 同类局限）
+- 安装链路闭环：installed_plugins.json 记录 v0.2.0 / git-subdir 源 ref v0.2.0 / installPath 指向缓存 0.2.0 / installedAt 2026-08-26T16:24:32Z（签名 tag 创建后 5 分钟）；config.json enabledPlugins 含本插件
+- `diff -r` 仓库 plugins/zcode-dynamic-workflow vs 缓存 0.2.0 = 空（字节一致）；`git tag -v v0.2.0` Good signature -> cd51a00；会话起点工作树 clean @ a282dee
+- SHA256SUMS 35/35 OK（本节写入后由主 Agent 重新生成并复验）
+- Skill 自 0.2.0 缓存挂载；/ultracode 由用户实际调用（本会话即其产物；补上 §14 记录的"/ultracode 当次未被字面调用"局限）
+- 四处版本号一致（plugin.json:3 / marketplace.json ref+version / README.md:5 / SKILL.md:7 metadata.version）
+- 静态残留：无模型占位符、无 hooks/mcpServers、五 agent 模型 ID 与 MODEL-MAPPING 设计一致
+
+### 探针记录
+
+| 探针 | 路由 | 结果 | 关键证据 |
+|---|---|---|---|
+| docs/05 场景定义提取；docs/08 历史摘要；四处版本号核验（双遍） | explore-flash ×3 | PASS | 结构化返回+file:line |
+| 欠账范围广度扫描（含 TASKS.md） | 内置 Explore | PASS | scope-complete；全欠账项映射到本会话 |
+| 拒绝路径探针：读工作区 .zcode、读用户级 ~/.zcode、写文件 | explore-flash | PASS | 0 次工具调用，逐项拒绝并陈述策略依据 |
+| 写档活体：fast（夹带 CONTEXT 注入防御）/ standard（Write+Edit+Glob+Grep）/ deep（Write+Edit pending->applied） | fast / standard / deep 各 1 | PASS | 主 Agent cat -A 字节级回读全过；injected-extra.md 未被创建；注入指令未被执行并在 RISKS 上报 |
+| 串行流水线 fixture A→B→C | worker-fast ×3，三个顺序波次 | PASS | schema.json -> parser.md -> tests.md；字段 id/active 逐波真实传递（B 实读 A、C 实读 B），无假并行 |
+| 探针(ii)：同一不可满足任务两败后仲裁 | fast blocked -> standard blocked -> worker-review | PASS | VERDICT pass + 建议 void；裁决前主 Agent 零写入；任务按裁决作废（见局限 7） |
+| 探针(iii)：少文件非平凡文档写 | worker-standard | PASS | 本节 + TASKS.md + MODEL-MAPPING.md 三处更新，主 Agent 回读核验 |
+| 升级路径触发尝试（超档位穷尽盘点） | explore-flash | done（未触发 partial） | 自报 32 文件/实际 33（差 1）；按文件枚举完整；升级条件未自然出现（见局限 1） |
+| 最终验收裁决 | worker-review | PASS（附条件） | 四问裁决；点名两条补充局限与收尾清单 |
+
+### 门覆盖映射
+
+- 活体覆盖：F-01（行为性：琐碎核查/回读/簿记由主 Agent 直接完成，零委派）、F-02（v0.2.0 难度分级只读路由：低中难度 explore-flash ×5、广度扫描内置 Explore ×1）、F-07（fixture 三波次串行）、F-12（主 Agent 独占任务图/路由/整合/最终答复；零嵌套派生）、F-13（CONTEXT 注入防御活体 PASS + 工具白名单/injectAgentsMd:false 结构核验 + .zcode 双层拒绝活体 + SCOPE 全部为主 Agent 预先解析的工作区内规范路径）、F-14（worker-review ×2 仅 Read/Glob/Grep、未触 .zcode、VERDICT 契约仅经结果通道返回）、F-15（本会话 /ultracode 编排全程：规模判断、委派映射、上下文卫生、琐碎直做例外、主 Agent 终答）
+- 模式级覆盖（声明式仓库无真实代码面）：F-05（多波次编排 + Explore 上下文 + deep 关键写 + review 高保证裁决 + 显式验证计划）、F-09（高风险验收证据小改动 -> review 覆盖规则）
+- 沿用旧证据未重跑：F-13/F-14 的 planted-link 诱链子项与 TOCTOU 链接竞态子项（docs/05:205-206 / :219-220）——沿用 §14:493-494 的活体证据 + §19:736 策略文本未变核验；全新活体证据需外部 harness
+- 质量指标（docs/05:249-253 阈值）：路由正确 15/15 常规委派决策 = 100%（≥80%；分母为派发决策数，非场景数）；deep 误用 0（另有两例刻意探针不计入路由分母：deep 活体渠道探针沿 §17:670 先例、flash 边界触发尝试探针）；嵌套 subagent 0；无限重试 0（两败即仲裁，无同层重派）
+
+### 如实记录的局限
+
+1. 升级路径（explore-flash partial -> 内置 Explore 一次，SKILL.md:118）运行时未触发：拒绝探针走拒绝分支、超档位盘点返回 done。仅策略层验证。TASKS 对应子项保持"策略已验证 / 运行时未触发"，不随本节整项勾销。
+2. thoughtLevel low/high/max 证据强度：仅"全部派发成功、无归因于 effort 取值的失败"（MODEL-MAPPING.md 记载无法识别的取值可能被静默忽略）；强度实际生效不可会话内观测。
+3. F-13/F-14 对抗性子项（planted-link、TOCTOU）沿用 §14 活体证据 + §19 文本核验，非本次全新活体覆盖。
+4. 宿主版本号 3.9.2 为用户陈述 + changelog 佐证（CLI 不在 PATH）。
+5. 仍然开放：macOS/其他平台核心复验（TASKS 对应项）、远程环境分支（§16:631）、使用反馈阈值评估（TASKS 对应项）。
+6. explore-flash 穷尽盘点自报 32 文件、磁盘实际 33（含本会话 5 个 .tmp 探针文件）：计数口径小误差、按文件枚举完整；作为低成本档能力校准数据点记入 TASKS 反馈项。
+7. 作废任务：.tmp-v020-regression/missing-note.md 编辑任务（fixture 设计性不可满足），经 worker-review 仲裁 void，全程零写入。
+8. 收尾动作：MODEL-MAPPING.md 状态更新（本次执行）、SHA256SUMS 重生成（主 Agent）、.tmp-v020-* 探针目录删除（主 Agent，沿 §14/§17 清理先例）。
+

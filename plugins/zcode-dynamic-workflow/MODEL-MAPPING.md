@@ -1,11 +1,14 @@
 # Model Mapping
 
-Status: **GLM-5.3 mapping configured and verified (2026-08-19, docs/08 §11); the
-GLM-5.3-Flash remap of worker-fast/worker-standard and the new `explore-flash`
-agent (2026-08-27) are configured but pending the new-session verification
-described in Validation.** Release `v0.2.0` is published as a GPG-signed tag with
-the marketplace ref pinned to it; the in-app GitHub update path was proven at
-v0.1.3.
+Status: **all five agents' mappings are configured and verified in live sessions: the
+GLM-5.3 mapping on 2026-08-19 (docs/08 §11), and the GLM-5.3-Flash remap of
+worker-fast/worker-standard plus the new `explore-flash` agent on 2026-08-27 in a
+fresh ZCode 3.9.2 session: qualified model-ID resolution succeeded (all five agents
+dispatched successfully in practice), and `low`/`high`/`max` showed no failures
+attributable to effort values (actual effort-level effectiveness is not observable
+in-session); evidence in docs/08-TEST-RECORD.md §21.** Release `v0.2.0` is published as
+a GPG-signed tag with the marketplace ref pinned to it; the in-app GitHub update path
+was proven at v0.1.3.
 
 ## Active mapping (hybrid — GLM-5.3-Flash for explore-flash/fast/standard, GLM-5.3 for deep/review)
 
@@ -30,8 +33,11 @@ provider prefix, and the bare-ID fallback per the documented adjustment order is
 `glm-5.3-flash`. The reasoning-effort field is `thoughtLevel` per the official
 subagents documentation (https://zcode.z.ai/en/docs/subagents): no `reasoning_effort`
 field exists, and unrecognized frontmatter keys are silently ignored, so only
-`thoughtLevel` is written. Pending new-session verification: that the qualified form
-resolves and that `low`/`high`/`max` are effort levels this model supports.
+`thoughtLevel` is written. Verified on 2026-08-27 in a fresh ZCode 3.9.2 session
+(docs/08-TEST-RECORD.md §21): the qualified form resolved (all five agents were
+dispatched successfully in practice), and `low`/`high`/`max` showed no failures
+attributable to effort values (whether an effort level is actually in effect is not
+observable in-session).
 
 Also on 2026-08-27: added `explore-flash`, a fifth agent modeled on the built-in
 Explore role for low-to-medium difficulty read-only exploration at lower cost

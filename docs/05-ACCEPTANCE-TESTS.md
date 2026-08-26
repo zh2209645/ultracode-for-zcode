@@ -8,6 +8,7 @@
 > misuse 0, no nesting, no infinite retries); full record in docs/08 §14. Release history:
 > v0.1.5 shipped after three adversarial review rounds (docs/08 §13); the prior regression
 > (8/8 PASS on v0.1.3 behavior) is docs/08 §11–§12.
+> 2026-08-27: the v0.2.0 post-release mandatory regression — nine gates plus fix-seam probes (i)/(ii) live and (iii) as the record write — PASSED in a fresh ZCode 3.9.2 session (16 plugin-agent dispatches, routing 15/15, deep misuse 0, no nesting, no infinite retries; the explore-flash→Explore escalation sub-item policy-verified only, trigger never arose); full record in docs/08 §21.
 
 ## 1. 静态加载测试
 

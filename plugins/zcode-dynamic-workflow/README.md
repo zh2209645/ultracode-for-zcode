@@ -9,7 +9,7 @@ A lightweight ZCode plugin that teaches the primary Agent to plan a task dynamic
 - worker-standard;
 - worker-deep.
 
-The primary Agent retains planning, dependency management, aggregation, escalation, verification, and the final response. It sizes the whole request before acting, keeps its own context to goals, decisions, and verified results, and — under `/ultracode` orchestrator mode — delegates execution by default, stepping in itself only for trivial work, after an explicit subagent failure or incomplete result that re-dispatch cannot recover, or for work that cannot be decomposed and couples several interrelated files. Release v0.2.0 (2026-08-27) adds the `explore-flash` explorer tier and the GLM-5.3-Flash hybrid model mapping; the v0.1.5 prompt updates passed their mandatory regression (including F-15) on 2026-08-19, and core functionality was re-verified after the ZCode 3.8.1 host update the same day.
+The primary Agent retains planning, dependency management, aggregation, escalation, verification, and the final response. It sizes the whole request before acting, keeps its own context to goals, decisions, and verified results, and — under `/ultracode` orchestrator mode — delegates execution by default, stepping in itself only for trivial work, after an explicit subagent failure or incomplete result that re-dispatch cannot recover, or for work that cannot be decomposed and couples several interrelated files. Release v0.2.0 (2026-08-27) adds the `explore-flash` explorer tier and the GLM-5.3-Flash hybrid model mapping; the v0.1.5 prompt updates passed their mandatory regression (including F-15) on 2026-08-19, and core functionality was re-verified after the ZCode 3.8.1 host update the same day. v0.2.0 passed its post-release comprehensive verification — install chain, all five agents live-dispatched, nine gates plus the three fix-seam probes — on ZCode 3.9.2 (2026-08-27, docs/08 §21).
 
 ## Installation
 
@@ -19,7 +19,7 @@ Model IDs are pre-configured for the local machine
 a GPG-signed tag and the marketplace source is pinned to it. v0.1.3 was verified in-app
 from GitHub on ZCode 3.7.7 (mandatory regression 8/8 PASS, 2026-08-19); the full mandatory
 set including F-15 passed on v0.1.5 (9 scenarios + 3 probes, 2026-08-19), and core
-functionality was re-verified after the ZCode 3.8.1 host update (2026-08-19). Protect
+functionality was re-verified after the ZCode 3.8.1 host update (2026-08-19). v0.2.0 passed full post-release verification on ZCode 3.9.2 (2026-08-27, docs/08 §21). Protect
 release tags from force-updates. To install:
 
 1. In ZCode, open Settings → Plugins → Discover → `+`.
