@@ -41,3 +41,4 @@
 - 2026-08-25 — ZCode 3.9.1 升级后核心复验通过，四类 worker 活体派发（`docs/08` §17）
 - 2026-08-27 — worker-fast/worker-standard 切换 GLM-5.3-Flash（ZCode 3.9.2），静态验证通过，运行时验证待发布后新会话（`docs/08` §18）
 - 2026-08-27 — 新增第五个 agent explore-flash（低成本只读探索档），产品边界改五 agent 口径，静态验证通过（`docs/08` §19）
+- 2026-08-27 — v0.2.0 发布：explore-flash 五 agent、GLM-5.3-Flash 混合映射、难度分流只读路由；两轮发布前审核 GO，GPG 签名 tag（cd51a00）推送完成（`docs/08` §20）

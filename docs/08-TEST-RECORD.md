@@ -749,5 +749,6 @@ Explore / worker-fast / worker-review）与只读边界在 WSL2 下全部通过�
 - 版本号四处同步 0.2.0：`plugin.json`、`marketplace.json`（version + ref `v0.2.0`）、根 `README.md` Current release、`SKILL.md` `metadata.version`（本版起按四处口径，系 §19 审核修正）；插件 README 与 MODEL-MAPPING 的发布引述同步更新；docs/05 头注、docs/09 与本文件既有各节的 v0.1.5 表述均为历史记录，保留原文。
 - `SHA256SUMS.txt` 按最终文件重新生成并全量校验通过（35 文件，提交前实跑）。
 - 发布动作：随本节提交打 GPG 签名 tag `v0.2.0` 并推送 main 与 tag；签名与推送结果补记于本节末行。
+- 签名与推送结果（发布提交后实跑）：`git tag -v v0.2.0` Good signature（EDDSA key `45D58FB03D43659F`，ultimate 信任；tag → cd51a00）；main 推送 `6c73a54..cd51a00`，tag 已推送且 `git ls-remote` 确认远端 `refs/tags/v0.2.0` → cd51a00。本行与 TASKS.md 里程碑随收口提交补录，先例同 b16a4ab。
 - 顺延（发布后新会话）：安装/更新验证、五 agent 活体派发（含 explore-flash 拒写/拒 `.zcode`/升级路径）、强制回归 9 场景 + 3 探针——由 TASKS.md 待办追踪。
 
