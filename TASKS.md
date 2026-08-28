@@ -17,7 +17,7 @@
 
 - [x] 评估 `worker-fast` 切换到 `glm-5-turbo` —— 已被取代：2026-08-27 随 ZCode 3.9.2 直接将 worker-fast/worker-standard 切换为 `glm-5.3-flash`（`docs/08` §18）。
 - [x] 新版本发布后的新会话实测 GLM-5.3-Flash 映射与 explore-flash：确认 qualified model ID 解析（回退顺序见 `docs/04` §4）、`thoughtLevel` low/high/max 生效、五 agent 注册与 explore-flash 只读派发/拒写/升级路径，随后按发布检查单重跑强制回归 9 场景 + 3 探针并追加 `docs/08` 记录（`docs/08` §18、§19）—— 已于 2026-08-27 ZCode 3.9.2 新会话完成（`docs/08` §21）；但其中「explore-flash partial→Explore 升级路径」子项为策略已验证/运行时未触发（触发条件未自然出现），如需运行时证据待后续真实 partial 场景补充。
-- [ ] ZCode 发布新版本时复验核心链路：插件加载、`/ultracode` 挂载、agent 注册、Explore/worker 实际派发，并追加 `docs/08` 记录。——实例记录：3.9.2 已复验（2026-08-27，`docs/08` §21）。
+- [ ] ZCode 发布新版本时复验核心链路：插件加载、`/ultracode` 挂载、agent 注册、Explore/worker 实际派发，并追加 `docs/08` 记录。——实例记录：3.9.2 已复验（2026-08-27，`docs/08` §21）；3.10.1 已复验（2026-08-29，`docs/08` §22）。
 - [ ] 在更多平台（如 macOS）补充核心复验记录（现有 Windows 与 WSL2 证据）。
 - [ ] 收集一段时间的实际使用反馈后，评估是否需要调整 `SKILL.md` 的请求定级与路由阈值。已记数据点：explore-flash（low 档）在 2026-08-27 会话完成 32 文件全仓穷尽盘点且按文件枚举完整（自报计数 32 vs 实际 33，差 1），提示低成本档能力上限高于阈值假设，供路由阈值评估参考（`docs/08` §21）。
 

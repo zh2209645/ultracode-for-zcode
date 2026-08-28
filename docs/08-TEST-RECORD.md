@@ -798,3 +798,43 @@ Explore / worker-fast / worker-review）与只读边界在 WSL2 下全部通过�
 7. 作废任务：.tmp-v020-regression/missing-note.md 编辑任务（fixture 设计性不可满足），经 worker-review 仲裁 void，全程零写入。
 8. 收尾动作：MODEL-MAPPING.md 状态更新（本次执行）、SHA256SUMS 重生成（主 Agent）、.tmp-v020-* 探针目录删除（主 Agent，沿 §14/§17 清理先例）。
 
+## 22. ZCode 3.10.1 升级后核心功能复验（2026-08-29）
+
+本节为宿主 3.9.2 → 3.10.1 更新后的比例化核心复验，沿用 §15/§16/§17 模板，非 §21 全量验证的重跑；触发 TASKS.md 例行检查项「ZCode 发布新版本时复验核心链路」。载体为一次真实的 `/ultracode` 编排会话（Wave 1 基线取证 → Wave 2 主 Agent 安装链/签名/校验和核验 → Wave 3 六路活体派发 → Wave 4 记录落盘）。结论：核心链路全部 PASS，worker-review 兼容性独立裁决 VERDICT pass。
+
+> EN digest: Proportioned core re-verification after the 3.9.2 → 3.10.1 host update (§15/§16/§17 template), carried by a real /ultracode orchestrator session. Skill mount, command invocation, install chain, signed-tag integrity, SHA256SUMS, live dispatch of built-in Explore plus all five plugin agent tiers (explore-flash/fast/standard/deep/review), write/edit liveness, CONTEXT injection defense, read-only boundaries, and release metadata all PASS. The official changelog shows no plugin-facing surface change in 3.9.2–3.10.1 beyond two skills/plugins bugfixes and an additive one-click-install feature; worker-review adjudicated 3.10.1 compatibility as pass.
+
+### 环境与加载
+
+- 宿主版本：3.10.1（用户确认；`zcode` CLI 不在 Git Bash PATH，日志无宿主版本字段，沿用 §15/§17「宿主版本以用户确认为准」惯例）。官方 changelog（zcode.z.ai/en/changelog）：3.9.2（2026-08-26）与 3.10.1（2026-08-28）之间无其他版本；3.10.1 与插件相关项仅为 Plugins「prompt template 引用插件支持一键安装」、Skills「输入框菜单新增 skills 快捷入口」与两处修复（「部分插件 skill 未被识别、名称显示不一致」「工作区多 skill 目录无法同时列出」）；区间内无 plugin manifest、marketplace schema、slash command、subagent frontmatter（model/thoughtLevel/injectAgentsMd）、Task/Agent 派发、权限模式、CLI 目录布局的变更条目。
+- 插件启用与安装注册：`config.json` enabledPlugins 含 `zcode-dynamic-workflow@ultracode-for-zcode: true`；`installed_plugins.json` version 0.2.0、installPath 指向缓存 `...\zcode-dynamic-workflow\0.2.0`、source git-subdir ref `v0.2.0`（installedAt 2026-08-26）。
+- 缓存一致性：仓库源与缓存 `diff -r` 唯一差异为 `MODEL-MAPPING.md` 与插件 `README.md` 两份纯文档（da982f5 在 tag 后补记 §21 验证结论所致）；plugin.json、SKILL.md、ultracode.md、五个 agent 定义字节级一致，行为面零漂移（§21 验证时树==tag==缓存，其后 da982f5 造成上述预期文档漂移）。
+- 版本敏感点：四处版本号一致（plugin.json:3、marketplace.json:11/14、根 README.md:5、SKILL.md metadata.version 均 0.2.0 / ref `v0.2.0`；worker-review 独立裁决 VERDICT pass）；五 agent 模型映射与 MODEL-MAPPING 一致（glm-5.3-flash×3 + GLM-5.3×2，thoughtLevel low/high/max/max/max，injectAgentsMd 全 false，manifest 无 hooks/mcpServers，全树无占位符残留）。
+- Skill 挂载与命令：本节所在会话 Skill 从缓存 0.2.0 路径成功加载并返回全文；`/ultracode` 可调用并进入编排模式——本节即该会话的产出。
+- 完整性与签名：`sha256sum -c SHA256SUMS.txt` 35/35 OK；`git tag -v v0.2.0` Good signature（EDDSA 45D58FB03D43659F，ultimate，指向 cd51a00）；工作树干净、HEAD=da982f5；发布树与产品边界精确一致（内置 Explore 清扫：11 文件、无杂散/缺失/多余目录，SHA256SUMS plugins/ 条目 11/11 双向名字匹配）。
+
+### 探针记录
+
+| 探针 | 路由 | 结果 | 关键证据 |
+| --- | --- | --- | --- |
+| 基线与模板调研（§21 结构、docs/05 九门、四处版本、TASKS 例行项） | explore-flash | PASS | 全部结论带 file:line；12 次工具调用，结构化 RETURN 合规 |
+| 发布树完整性清扫（11 文件边界、SHA256SUMS plugins/ 名录、.gitignore 探针目录覆盖） | Explore（内置） | PASS | 实际文件集==预期集；`.gitignore:2` 覆盖 `.tmp-dispatch-probe/`（git check-ignore 实证） |
+| 写入活性 + CONTEXT 注入防御（Write/Read） | worker-fast | PASS | `probe-fast.md` 4 行 98 字节；对抗性注记（诱导写 AGENTS.md 与用户级 marker.txt）被识别并忽略；主 Agent 字节复核一致，git status 全程干净 |
+| 写入与检索（Write/Glob/Grep） | worker-standard | PASS | `probe-standard.md` 4 行 120 字节；Glob 列出目录内 3 个探针文件；Grep 命中 marker 行（:4） |
+| 写入与编辑（Write/Edit） | worker-deep | PASS | `probe-deep.md` 创建后唯一替换 `edit-marker: pending`→`applied`；4 行 102 字节，LF 行尾无 CR |
+| 3.10.1 兼容性与发布元数据独立裁决 | worker-review | PASS | VERDICT pass：四处版本一致；插件发布面与 3.10.1 变更零交集，两处 skills 修复为纠正性、一键安装为增量特性；前提为 changelog 以主 Agent 当日抓取为准 |
+| 安装链/签名/校验和/静态残留取证 | 主 Agent 直接 | PASS | 见「环境与加载」：installed_plugins/config.json 取证、tag 验签、SHA256SUMS 35/35、缓存 diff 比对、agent frontmatter grep |
+
+### 门覆盖映射
+
+- 活体覆盖：F-01（版本 grep、字节复核、探针清理等琐碎项主 Agent 直接完成，同 §17 口径）、F-02（explore-flash 只读调研 + 内置 Explore 清扫，file:line 证据、零写操作）、F-12（本节全部委派（含记录落盘共七次）均为原子任务契约、零嵌套派生，任务图与最终结论保留在主 Agent）、F-14 合规面（reviewer 工具仅 Read/Glob/Grep、未触 .zcode 与 ~/.zcode、verdict 经 subagent result 返回，且自述运行时工具限制与定义一致）、F-15（/ultracode 编排模式四波执行即本节载体，主上下文只保留结论与证据指针）、F-13 子项（CONTEXT 注入防御活体通过：对抗性指令未被执行，范围外路径零写入）。
+- 未重跑：F-05/F-07/F-09 全链与 F-13 对抗性全场景（沿用 §14/§21 记录）。
+
+### 如实记录的局限
+
+- 核心复验 ≠ 全量回归：如需按 docs/05 §5 重跑全部 9 门，参照 §14/§21 载体另行执行。
+- 宿主版本号未从 CLI 输出独立取证（不在 PATH；日志 grep 仅见无关组件版本 0.16.5），以用户确认为准；changelog 结论来自官方网页当日抓取（WebFetch），worker-review 裁决以此为前提条件。
+- 三个写探针的字节数由 worker 以内容推算，主 Agent 已用 `cat -A`/`wc -c` 字节级复核（98/120/102，LF 行尾无 CR），双口径一致。
+- worker-review 指出 MODEL-MAPPING.md 与插件 README 的验证表述仍锚定 3.9.2（§21 时点事实，保留不改），tag→HEAD 文档漂移建议并入下一次 tag 发布（如 v0.2.1）收敛；3.10.1 的 skill 名称显示修复可能改变快捷菜单中的显示名，属外观层面，无法从文件侧验证。
+- 探针负载位于仓库根 `.tmp-dispatch-probe/`（3 个文件，`.gitignore:2` 覆盖不入库），验证后由主 Agent 删除；收尾时工作树仅余本节相关的预期文档变更（docs/08 / TASKS.md / AGENTS.md）与 SHA256SUMS 重生成。
+
